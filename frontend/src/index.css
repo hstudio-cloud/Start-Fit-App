@@ -18,13 +18,13 @@
 
 @layer components {
   .card {
-    @apply bg-dark-800 border border-white/5 rounded-2xl p-6;
+    @apply bg-dark-800 border border-white/5 rounded-2xl p-4 sm:p-6;
     background: linear-gradient(135deg, rgba(13, 17, 23, 0.9), rgba(13, 31, 45, 0.6));
     backdrop-filter: blur(10px);
   }
 
   .card-sm {
-    @apply bg-dark-800 border border-white/5 rounded-xl p-4;
+    @apply bg-dark-800 border border-white/5 rounded-xl p-3 sm:p-4;
     background: linear-gradient(135deg, rgba(13, 17, 23, 0.9), rgba(13, 31, 45, 0.6));
   }
 
@@ -107,4 +107,269 @@
 
 .animate-slide-in {
   animation: slideIn 0.3s ease-out;
+}
+
+.exercise-visualizer {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at top, rgba(0, 180, 216, 0.18), transparent 45%),
+    linear-gradient(180deg, rgba(13, 31, 45, 0.95), rgba(13, 17, 23, 0.92));
+  min-height: 15rem;
+}
+
+.exercise-figure {
+  position: relative;
+  width: 100%;
+  height: 15rem;
+}
+
+.exercise-figure span {
+  position: absolute;
+  display: block;
+  transform-origin: top center;
+}
+
+.figure-head {
+  top: 1.5rem;
+  left: 50%;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin-left: -1.375rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #caf0f8, #90e0ef);
+  box-shadow: 0 0 20px rgba(144, 224, 239, 0.22);
+}
+
+.figure-body {
+  top: 4.1rem;
+  left: 50%;
+  width: 0.75rem;
+  height: 4.4rem;
+  margin-left: -0.375rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffffff, #90e0ef);
+}
+
+.figure-arm,
+.figure-leg {
+  width: 0.65rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffffff, #48cae4);
+}
+
+.figure-arm {
+  top: 4.2rem;
+  height: 3.8rem;
+}
+
+.figure-arm.left {
+  left: calc(50% - 2.3rem);
+  transform: rotate(35deg);
+}
+
+.figure-arm.right {
+  left: calc(50% + 1.6rem);
+  transform: rotate(-35deg);
+}
+
+.figure-leg {
+  top: 8.1rem;
+  height: 4.6rem;
+}
+
+.figure-leg.left {
+  left: calc(50% - 1.6rem);
+  transform: rotate(12deg);
+}
+
+.figure-leg.right {
+  left: calc(50% + 0.8rem);
+  transform: rotate(-12deg);
+}
+
+.figure-bar {
+  top: 4.8rem;
+  left: 50%;
+  width: 6.5rem;
+  height: 0.6rem;
+  margin-left: -3.25rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #0077b6, #00b4d8, #0077b6);
+  box-shadow: 0 0 18px rgba(0, 180, 216, 0.22);
+  opacity: 0.65;
+}
+
+.figure-floor {
+  bottom: 1.5rem;
+  left: 15%;
+  width: 70%;
+  height: 0.3rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.animation-generic .figure-arm.left { animation: genericArmLeft 1.4s ease-in-out infinite; }
+.animation-generic .figure-arm.right { animation: genericArmRight 1.4s ease-in-out infinite; }
+.animation-generic .figure-leg.left { animation: genericLegLeft 1.4s ease-in-out infinite; }
+.animation-generic .figure-leg.right { animation: genericLegRight 1.4s ease-in-out infinite; }
+
+.animation-push .figure-arm.left,
+.animation-press .figure-arm.left { animation: pressLeft 1.6s ease-in-out infinite; }
+.animation-push .figure-arm.right,
+.animation-press .figure-arm.right { animation: pressRight 1.6s ease-in-out infinite; }
+.animation-push .figure-bar,
+.animation-press .figure-bar { animation: barPress 1.6s ease-in-out infinite; opacity: 0.9; }
+
+.animation-pull .figure-arm.left { animation: pullLeft 1.5s ease-in-out infinite; }
+.animation-pull .figure-arm.right { animation: pullRight 1.5s ease-in-out infinite; }
+.animation-pull .figure-body { animation: bodyLean 1.5s ease-in-out infinite; }
+
+.animation-squat .figure-body,
+.animation-lunge .figure-body { animation: squatBody 1.8s ease-in-out infinite; }
+.animation-squat .figure-leg.left,
+.animation-lunge .figure-leg.left { animation: squatLegLeft 1.8s ease-in-out infinite; }
+.animation-squat .figure-leg.right,
+.animation-lunge .figure-leg.right { animation: squatLegRight 1.8s ease-in-out infinite; }
+
+.animation-curl .figure-arm.left { animation: curlLeft 1.3s ease-in-out infinite; }
+.animation-curl .figure-arm.right { animation: curlRight 1.3s ease-in-out infinite; }
+
+.animation-plank .figure-head,
+.animation-crunch .figure-head { top: 5.8rem; left: calc(50% - 4.8rem); width: 2.2rem; height: 2.2rem; }
+.animation-plank .figure-body,
+.animation-crunch .figure-body {
+  top: 7rem;
+  left: calc(50% - 2.5rem);
+  width: 6rem;
+  height: 0.7rem;
+  margin-left: 0;
+  transform-origin: left center;
+}
+.animation-plank .figure-arm.left,
+.animation-plank .figure-arm.right,
+.animation-plank .figure-leg.left,
+.animation-plank .figure-leg.right,
+.animation-crunch .figure-arm.left,
+.animation-crunch .figure-arm.right,
+.animation-crunch .figure-leg.left,
+.animation-crunch .figure-leg.right {
+  top: 0;
+  height: 0;
+  opacity: 0;
+}
+.animation-plank .figure-body { animation: plankBody 1.8s ease-in-out infinite; }
+.animation-crunch .figure-body { animation: crunchBody 1.4s ease-in-out infinite; }
+
+.animation-calf .figure-body { animation: calfBody 1.3s ease-in-out infinite; }
+.animation-calf .figure-leg.left { animation: calfLegLeft 1.3s ease-in-out infinite; }
+.animation-calf .figure-leg.right { animation: calfLegRight 1.3s ease-in-out infinite; }
+
+.animation-hinge .figure-body { animation: hingeBody 1.6s ease-in-out infinite; transform-origin: top center; }
+
+@keyframes genericArmLeft {
+  0%, 100% { transform: rotate(35deg); }
+  50% { transform: rotate(8deg); }
+}
+
+@keyframes genericArmRight {
+  0%, 100% { transform: rotate(-35deg); }
+  50% { transform: rotate(-8deg); }
+}
+
+@keyframes genericLegLeft {
+  0%, 100% { transform: rotate(12deg); }
+  50% { transform: rotate(5deg); }
+}
+
+@keyframes genericLegRight {
+  0%, 100% { transform: rotate(-12deg); }
+  50% { transform: rotate(-5deg); }
+}
+
+@keyframes pressLeft {
+  0%, 100% { transform: rotate(35deg); }
+  50% { transform: translateY(-1.1rem) rotate(-8deg); }
+}
+
+@keyframes pressRight {
+  0%, 100% { transform: rotate(-35deg); }
+  50% { transform: translateY(-1.1rem) rotate(8deg); }
+}
+
+@keyframes barPress {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.25rem); }
+}
+
+@keyframes pullLeft {
+  0%, 100% { transform: rotate(40deg); }
+  50% { transform: rotate(70deg) translateX(0.4rem); }
+}
+
+@keyframes pullRight {
+  0%, 100% { transform: rotate(-40deg); }
+  50% { transform: rotate(-70deg) translateX(-0.4rem); }
+}
+
+@keyframes bodyLean {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(8deg); }
+}
+
+@keyframes squatBody {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(1.1rem); }
+}
+
+@keyframes squatLegLeft {
+  0%, 100% { transform: rotate(12deg); }
+  50% { transform: rotate(35deg); }
+}
+
+@keyframes squatLegRight {
+  0%, 100% { transform: rotate(-12deg); }
+  50% { transform: rotate(-35deg); }
+}
+
+@keyframes curlLeft {
+  0%, 100% { transform: rotate(35deg); }
+  50% { transform: rotate(85deg) translateY(-0.3rem); }
+}
+
+@keyframes curlRight {
+  0%, 100% { transform: rotate(-35deg); }
+  50% { transform: rotate(-85deg) translateY(-0.3rem); }
+}
+
+@keyframes plankBody {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(1.5deg); }
+}
+
+@keyframes crunchBody {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-18deg); }
+}
+
+@keyframes calfBody {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-0.55rem); }
+}
+
+@keyframes calfLegLeft {
+  0%, 100% { transform: rotate(12deg); }
+  50% { transform: rotate(3deg); }
+}
+
+@keyframes calfLegRight {
+  0%, 100% { transform: rotate(-12deg); }
+  50% { transform: rotate(-3deg); }
+}
+
+@keyframes hingeBody {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(25deg); }
 }

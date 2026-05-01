@@ -7,6 +7,9 @@ import StudentDashboard from './pages/student/Dashboard'
 import Questionnaire from './pages/student/Questionnaire'
 import WorkoutSession from './pages/student/WorkoutSession'
 import Evolution from './pages/student/Evolution'
+import StudentPayments from './pages/student/Payments'
+import StudentDiets from './pages/student/Diets'
+import StudentTrainer from './pages/student/Trainer'
 import AdminDashboard from './pages/admin/Dashboard'
 import AdminStudents from './pages/admin/Students'
 import AdminPayments from './pages/admin/Payments'
@@ -46,6 +49,9 @@ const AppRoutes = () => {
       <Route path="/student/questionnaire" element={<ProtectedRoute roles={['student']}><Questionnaire /></ProtectedRoute>} />
       <Route path="/student/workout/:id" element={<ProtectedRoute roles={['student']}><WorkoutSession /></ProtectedRoute>} />
       <Route path="/student/evolution" element={<ProtectedRoute roles={['student']}><Evolution /></ProtectedRoute>} />
+      <Route path="/student/payments" element={<ProtectedRoute roles={['student']}><StudentPayments /></ProtectedRoute>} />
+      <Route path="/student/diets" element={<ProtectedRoute roles={['student']}><StudentDiets /></ProtectedRoute>} />
+      <Route path="/student/trainer" element={<ProtectedRoute roles={['student']}><StudentTrainer /></ProtectedRoute>} />
 
       {/* Admin Routes */}
       <Route path="/admin" element={<ProtectedRoute roles={['admin']}><AdminDashboard /></ProtectedRoute>} />

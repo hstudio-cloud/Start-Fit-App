@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const { calculateIMC } = require('./services/imcCalculator');
 const { generateWorkouts } = require('./services/workoutGenerator');
 const { store, clone, nextId } = require('./demoStore');
+const { buildExerciseForWorkout } = require('./services/exerciseLibrary');
+const { createPixCharge } = require('./services/pixPaymentService');
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'startfit_demo_secret';
@@ -43,6 +45,14 @@ function enrichPayment(payment) {
     ...clone(payment),
     student: enrichStudent(findStudentById(payment.student)),
   };
+}
+
+function findPaymentById(id) {
+  return store.payments.find((payment) => payment._id === id) || null;
+}
+
+function getStudentDiets(studentId) {
+  return store.diets.filter((diet) => diet.student === studentId && diet.active !== false);
 }
 
 function auth(req, res, roles = null) {
@@ -214,6 +224,95 @@ addRoute('put', '/admin/students/:id', (req, res) => {
   res.json({ success: true, message: 'Aluno atualizado com sucesso.' });
 });
 
+addRoute('get', '/student/teachers', (req, res) => {
+  const user = auth(req, res, ['student']);
+  if (!user) return;
+  const student = findStudentByUserId(user._id);
+  const teachers = store.users.filter((entry) => entry.role === 'teacher' && entry.active).map(publicUser);
+  res.json({ success: true, teachers, selectedTeacherId: student?.teacher || null });
+});
+
+addRoute('put', '/student/teacher', (req, res) => {
+  const user = auth(req, res, ['student']);
+  if (!user) return;
+  const student = findStudentByUserId(user._id);
+  if (!student) return res.status(404).json({ success: false, message: 'Aluno nao encontrado.' });
+  const teacherId = req.body?.teacherId || null;
+  if (teacherId && !findUserById(teacherId)) {
+    return res.status(404).json({ success: false, message: 'Personal nao encontrado.' });
+  }
+  student.teacher = teacherId;
+  res.json({ success: true, student: enrichStudent(student) });
+});
+
+addRoute('get', '/student/exercises/library', (req, res) => {
+  const user = auth(req, res, ['student']);
+  if (!user) return;
+  res.json({ success: true, exercises: clone(store.exerciseLibrary) });
+});
+
+addRoute('get', '/teacher/exercises/library', (req, res) => {
+  const user = auth(req, res, ['teacher', 'admin']);
+  if (!user) return;
+  res.json({ success: true, exercises: clone(store.exerciseLibrary) });
+});
+
+addRoute('get', '/student/diets', (req, res) => {
+  const user = auth(req, res, ['student']);
+  if (!user) return;
+  const student = findStudentByUserId(user._id);
+  res.json({ success: true, diets: clone(getStudentDiets(student._id)) });
+});
+
+addRoute('get', '/teacher/students/:id/diets', (req, res) => {
+  const user = auth(req, res, ['teacher', 'admin']);
+  if (!user) return;
+  res.json({ success: true, diets: clone(getStudentDiets(req.params.id)) });
+});
+
+addRoute('post', '/teacher/students/:id/diets', (req, res) => {
+  const user = auth(req, res, ['teacher', 'admin']);
+  if (!user) return;
+  const student = findStudentById(req.params.id);
+  if (!student) return res.status(404).json({ success: false, message: 'Aluno nao encontrado.' });
+  const { title, goal, hydrationLiters, caloriesTarget, meals, tips, notes } = req.body || {};
+  const diet = {
+    _id: nextId('diet'),
+    student: student._id,
+    teacher: user._id,
+    title: title || 'Plano alimentar personalizado',
+    goal: goal || '',
+    hydrationLiters: Number(hydrationLiters || 2),
+    caloriesTarget: Number(caloriesTarget || 0),
+    meals: clone(meals || []),
+    tips: clone(tips || []),
+    notes: notes || '',
+    active: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+  store.diets.unshift(diet);
+  res.status(201).json({ success: true, diet: clone(diet) });
+});
+
+addRoute('put', '/teacher/students/:id/diets/:dietId', (req, res) => {
+  const user = auth(req, res, ['teacher', 'admin']);
+  if (!user) return;
+  const diet = store.diets.find((entry) => entry._id === req.params.dietId && entry.student === req.params.id);
+  if (!diet) return res.status(404).json({ success: false, message: 'Plano alimentar nao encontrado.' });
+  Object.assign(diet, {
+    title: req.body?.title ?? diet.title,
+    goal: req.body?.goal ?? diet.goal,
+    hydrationLiters: Number(req.body?.hydrationLiters ?? diet.hydrationLiters),
+    caloriesTarget: Number(req.body?.caloriesTarget ?? diet.caloriesTarget),
+    meals: req.body?.meals ? clone(req.body.meals) : diet.meals,
+    tips: req.body?.tips ? clone(req.body.tips) : diet.tips,
+    notes: req.body?.notes ?? diet.notes,
+    updatedAt: new Date(),
+  });
+  res.json({ success: true, diet: clone(diet) });
+});
+
 addRoute('delete', '/admin/students/:id', (req, res) => {
   const user = auth(req, res, ['admin']);
   if (!user) return;
@@ -362,6 +461,32 @@ addRoute('get', '/student/payments', (req, res) => {
   res.json({ success: true, payments: clone(payments) });
 });
 
+addRoute('post', '/student/payments/:id/pix', async (req, res) => {
+  const user = auth(req, res, ['student']);
+  if (!user) return;
+  const student = findStudentByUserId(user._id);
+  const payment = findPaymentById(req.params.id);
+  if (!payment || payment.student !== student._id) {
+    return res.status(404).json({ success: false, message: 'Mensalidade nao encontrada.' });
+  }
+  if (payment.status === 'pago') {
+    return res.status(400).json({ success: false, message: 'Essa mensalidade ja foi paga.' });
+  }
+
+  try {
+    payment.pixCharge = await createPixCharge({
+      amount: Number(payment.amount),
+      description: `Mensalidade StartFit ${String(payment.referenceMonth).padStart(2, '0')}/${payment.referenceYear}`,
+      payerEmail: user.email,
+      paymentId: payment._id,
+    });
+    payment.paymentMethod = 'pix';
+    res.json({ success: true, payment: clone(payment), pixCharge: clone(payment.pixCharge) });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 addRoute('get', '/student/progress', (req, res) => {
   const user = auth(req, res, ['student']);
   if (!user) return;
@@ -400,7 +525,8 @@ addRoute('get', '/teacher/students/:id', (req, res) => {
   const workouts = store.workouts.filter((entry) => entry.student === req.params.id);
   const sessions = store.sessions.filter((entry) => entry.student === req.params.id).sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 10);
   const progress = store.progress.filter((entry) => entry.student === req.params.id).sort((a, b) => new Date(a.date) - new Date(b.date));
-  res.json({ success: true, student, workouts: clone(workouts), sessions: clone(sessions), progress: clone(progress) });
+  const diets = getStudentDiets(req.params.id);
+  res.json({ success: true, student, workouts: clone(workouts), sessions: clone(sessions), progress: clone(progress), diets: clone(diets) });
 });
 
 addRoute('post', '/teacher/students/:id/notes', (req, res) => {
@@ -410,6 +536,35 @@ addRoute('post', '/teacher/students/:id/notes', (req, res) => {
   if (!student) return res.status(404).json({ success: false, message: 'Aluno nao encontrado.' });
   student.notes.push({ text: req.body?.text || '', author: user.name, createdAt: new Date() });
   res.json({ success: true, notes: clone(student.notes) });
+});
+
+addRoute('put', '/teacher/students/:id/workouts/:workoutId', (req, res) => {
+  const user = auth(req, res, ['teacher', 'admin']);
+  if (!user) return;
+  const workout = store.workouts.find((entry) => entry._id === req.params.workoutId && entry.student === req.params.id);
+  if (!workout) return res.status(404).json({ success: false, message: 'Treino nao encontrado.' });
+
+  const selectedExercises = (req.body?.exercises || [])
+    .map((exercise, index) => {
+      const built = buildExerciseForWorkout(exercise.exerciseId || exercise.name, {
+        sets: Number(exercise.sets || 4),
+        reps: exercise.reps || '8-12',
+        duration: Number(exercise.duration || 0),
+        order: index,
+      });
+      return built;
+    })
+    .filter(Boolean);
+
+  workout.name = req.body?.name || workout.name;
+  workout.weekDay = Number.isInteger(req.body?.weekDay) ? req.body.weekDay : workout.weekDay;
+  workout.objective = req.body?.objective || workout.objective;
+  workout.description = req.body?.description || workout.description || '';
+  workout.estimatedDuration = Number(req.body?.estimatedDuration || workout.estimatedDuration || 60);
+  workout.generatedBy = 'teacher';
+  if (selectedExercises.length > 0) workout.exercises = selectedExercises;
+
+  res.json({ success: true, workout: clone(workout) });
 });
 
 module.exports = router;

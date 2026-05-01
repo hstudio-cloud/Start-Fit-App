@@ -46,6 +46,8 @@ export default function StudentDashboard() {
   const [todayWorkout, setTodayWorkout] = useState(null)
   const [payments, setPayments] = useState([])
   const [sessions, setSessions] = useState([])
+  const [diets, setDiets] = useState([])
+  const [teachers, setTeachers] = useState({ list: [], selectedTeacherId: '' })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -58,14 +60,21 @@ export default function StudentDashboard() {
 
   const fetchData = async () => {
     try {
-      const [workoutRes, paymentsRes, sessionsRes] = await Promise.all([
+      const [workoutRes, paymentsRes, sessionsRes, dietsRes, teachersRes] = await Promise.all([
         api.get('/student/workout/today'),
         api.get('/student/payments'),
         api.get('/student/sessions'),
+        api.get('/student/diets'),
+        api.get('/student/teachers'),
       ])
       setTodayWorkout(workoutRes.data.workout)
       setPayments(paymentsRes.data.payments || [])
       setSessions(sessionsRes.data.sessions || [])
+      setDiets(dietsRes.data.diets || [])
+      setTeachers({
+        list: teachersRes.data.teachers || [],
+        selectedTeacherId: teachersRes.data.selectedTeacherId || '',
+      })
     } catch (err) {
       toast.error('Erro ao carregar dados.')
     } finally {
@@ -75,6 +84,8 @@ export default function StudentDashboard() {
 
   const latestPayment = payments[0]
   const paymentStatus = latestPayment?.status
+  const activeDiet = diets[0]
+  const selectedTeacher = teachers.list.find((entry) => entry._id === teachers.selectedTeacherId)
   const weekSessions = sessions.filter(s => {
     const d = new Date(s.date)
     const now = new Date()
@@ -103,7 +114,7 @@ export default function StudentDashboard() {
     <Layout title="Meu Dashboard">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Greeting */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-2xl font-bold text-white">
               Olá, {user?.name?.split(' ')[0]}! 👋
@@ -139,6 +150,63 @@ export default function StudentDashboard() {
               <p className="text-white/40 text-xs">{s.label}</p>
             </div>
           ))}
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <button onClick={() => navigate('/student/payments')} className="card-sm text-left transition-colors hover:border-brand-500/30">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-white/30">Pix no app</p>
+                <p className="mt-2 text-lg font-bold text-white">Mensalidade</p>
+                <p className="mt-1 text-xs text-white/45">
+                  {latestPayment ? `Status ${paymentStatus}` : 'Sem cobrancas'}
+                </p>
+              </div>
+              <CreditCard size={18} className="text-brand-300" />
+            </div>
+          </button>
+
+          <button onClick={() => navigate('/student/diets')} className="card-sm text-left transition-colors hover:border-emerald-500/30">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-white/30">Plano alimentar</p>
+                <p className="mt-2 text-lg font-bold text-white">{activeDiet ? activeDiet.title : 'Dietas'}</p>
+                <p className="mt-1 text-xs text-white/45">
+                  {activeDiet ? `${activeDiet.meals?.length || 0} refeicoes planejadas` : 'Aguardando personal'}
+                </p>
+              </div>
+              <Apple size={18} className="text-emerald-400" />
+            </div>
+          </button>
+
+          <button onClick={() => navigate('/student/trainer')} className="card-sm text-left transition-colors hover:border-brand-500/30">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-white/30">Personal</p>
+                <p className="mt-2 text-lg font-bold text-white">{selectedTeacher?.name || 'Selecionar'}</p>
+                <p className="mt-1 text-xs text-white/45">
+                  {selectedTeacher ? 'Pode ajustar treinos e dar feedbacks' : 'Escolha um personal'}
+                </p>
+              </div>
+              <Award size={18} className="text-brand-300" />
+            </div>
+          </button>
+
+          <button
+            onClick={() => todayWorkout && navigate(`/student/workout/${todayWorkout._id}`)}
+            className="card-sm text-left transition-colors hover:border-amber-500/30"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-white/30">Treino guiado</p>
+                <p className="mt-2 text-lg font-bold text-white">Animacao dos exercicios</p>
+                <p className="mt-1 text-xs text-white/45">
+                  Abra o treino para visualizar os movimentos
+                </p>
+              </div>
+              <Play size={18} className="text-amber-400" />
+            </div>
+          </button>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">

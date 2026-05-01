@@ -1,5 +1,6 @@
 const { calculateIMC } = require('./services/imcCalculator');
 const { generateWorkouts } = require('./services/workoutGenerator');
+const { exerciseLibrary, findExerciseByName, inferAnimationKey } = require('./services/exerciseLibrary');
 
 const isDemoMode = !process.env.MONGODB_URI;
 
@@ -26,10 +27,12 @@ function buildStore() {
   const { imc, category } = calculateIMC(questionnaire.weight, questionnaire.height);
 
   const store = {
-    counters: { user: 4, student: 2, payment: 3, session: 2, progress: 7, workout: 0 },
+    counters: { user: 4, student: 2, payment: 3, session: 2, progress: 7, workout: 0, diet: 1 },
+    exerciseLibrary: clone(exerciseLibrary),
     users: [
       { _id: 'u_admin', name: 'Admin StartFit', email: 'admin@startfit.com', password: '123456', role: 'admin', phone: '', active: true, createdAt: now },
       { _id: 'u_teacher', name: 'Prof. Carlos Silva', email: 'professor@startfit.com', password: '123456', role: 'teacher', phone: '(84) 99999-1111', active: true, createdAt: now },
+      { _id: 'u_teacher_2', name: 'Ana Beatriz Rocha', email: 'ana.personal@startfit.com', password: '123456', role: 'teacher', phone: '(84) 98888-4444', active: true, createdAt: now },
       { _id: 'u_student_1', name: 'Joao Paulo Santos', email: 'joao@email.com', password: '123456', role: 'student', phone: '(84) 99999-2222', active: true, createdAt: now },
       { _id: 'u_student_2', name: 'Maria Fernanda Lima', email: 'maria@email.com', password: '123456', role: 'student', phone: '(84) 99999-3333', active: true, createdAt: now },
     ],
@@ -47,6 +50,7 @@ function buildStore() {
         totalWorkouts: 8,
         lastWorkout: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
         notes: [{ text: 'Bom progresso no treino.', author: 'Prof. Carlos Silva', createdAt: now }],
+        trainerFeedbacks: [{ text: 'Aumentar carga no supino na proxima semana.', author: 'Prof. Carlos Silva', createdAt: now }],
         createdAt: now,
       },
       {
@@ -62,12 +66,34 @@ function buildStore() {
         totalWorkouts: 0,
         lastWorkout: null,
         notes: [],
+        trainerFeedbacks: [],
         createdAt: now,
       },
     ],
     workouts: [],
     sessions: [],
     progress: [],
+    diets: [
+      {
+        _id: 'diet_1',
+        student: 's_1',
+        teacher: 'u_teacher',
+        title: 'Plano Lean Bulk',
+        goal: 'Ganho de massa com foco em energia para treino',
+        hydrationLiters: 3,
+        caloriesTarget: 2800,
+        meals: [
+          { title: 'Cafe da manha', time: '07:00', foods: ['4 ovos mexidos', '2 fatias de pao integral', '1 banana'], notes: 'Adicionar cafe sem acucar se quiser.' },
+          { title: 'Almoco', time: '12:30', foods: ['150g arroz', '180g frango', 'salada verde', 'feijao'], notes: 'Priorizar legumes no prato.' },
+          { title: 'Pre-treino', time: '16:30', foods: ['Iogurte', 'Aveia', '1 fruta'], notes: 'Consumir 60 min antes do treino.' },
+          { title: 'Jantar', time: '20:30', foods: ['Batata doce', 'Patinho moido', 'Legumes'], notes: 'Se treino for muito intenso, repetir carboidrato.' },
+        ],
+        tips: ['Dormir pelo menos 7h30.', 'Beber agua ao longo do dia.', 'Evitar longos periodos em jejum.'],
+        notes: 'Plano inicial montado pelo personal.',
+        active: true,
+        createdAt: now,
+      },
+    ],
     payments: [
       {
         _id: 'payment_1',
@@ -90,6 +116,7 @@ function buildStore() {
         paidDate: null,
         status: 'pendente',
         paymentMethod: '',
+        pixCharge: null,
       },
       {
         _id: 'payment_3',
@@ -101,6 +128,7 @@ function buildStore() {
         paidDate: null,
         status: 'vencido',
         paymentMethod: '',
+        pixCharge: null,
       },
     ],
   };
@@ -114,6 +142,16 @@ function buildStore() {
       isActive: true,
       createdAt: now,
       ...plan,
+      exercises: plan.exercises.map((exercise, exerciseIndex) => {
+        const match = findExerciseByName(exercise.name);
+        return {
+          ...exercise,
+          exerciseId: match?.id || '',
+          animationKey: match?.animationKey || inferAnimationKey(exercise.name, exercise.muscleGroup),
+          videoUrl: match?.videoUrl || '',
+          order: exerciseIndex,
+        };
+      }),
     });
   });
 

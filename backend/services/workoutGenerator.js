@@ -164,4 +164,4 @@ const generateWorkouts = (questionnaire) => {
   return workouts;
 };
 
-module.exports = { generateWorkouts };
+module.exports = { generateWorkouts, exerciseDatabase };

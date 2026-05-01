@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Layout from '../../components/Layout'
 import Timer from '../../components/Timer'
+import ExerciseVisualizer from '../../components/ExerciseVisualizer'
 import api from '../../services/api'
 import {
   ChevronLeft, Play, Pause, CheckCircle2, Clock, Dumbbell,
@@ -66,6 +67,9 @@ export default function WorkoutSession() {
       setWorkout(found)
 
       const exList = found.exercises.map(ex => ({
+        exerciseId: ex.exerciseId,
+        animationKey: ex.animationKey,
+        videoUrl: ex.videoUrl,
         exerciseName: ex.name, muscleGroup: ex.muscleGroup,
         plannedSets: ex.sets, plannedReps: ex.reps,
         completedSets: 0, load: '', reps: ex.reps,
@@ -204,6 +208,8 @@ export default function WorkoutSession() {
               {/* Expanded details */}
               {expanded === i && (
                 <div className="px-4 pb-4 border-t border-white/5 pt-4 space-y-4">
+                  <ExerciseVisualizer exercise={ex} />
+
                   {ex.instructions && (
                     <div className="flex gap-2 p-3 rounded-lg bg-brand-500/10 border border-brand-500/20">
                       <Info size={14} className="text-brand-300 flex-shrink-0 mt-0.5" />
