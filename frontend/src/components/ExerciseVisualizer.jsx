@@ -16,6 +16,7 @@ const animationLabels = {
 
 export default function ExerciseVisualizer({ exercise }) {
   const animationKey = exercise?.animationKey || 'generic'
+  const mediaKind = exercise?.mediaKind || 'video'
   const videoUrl = exercise?.videoUrl
   const videoSourceUrl = exercise?.videoSourceUrl
   const videoAttribution = exercise?.videoAttribution
@@ -37,24 +38,36 @@ export default function ExerciseVisualizer({ exercise }) {
             className="inline-flex items-center gap-2 rounded-xl border border-brand-400/30 bg-brand-500/10 px-3 py-2 text-xs font-semibold text-brand-300 transition-colors hover:bg-brand-500/20"
           >
             <PlayCircle size={14} />
-            Video
+            {mediaKind === 'video' ? 'Video' : 'Abrir midia'}
           </a>
         ) : null}
       </div>
 
       {videoUrl ? (
         <div className="overflow-hidden rounded-2xl border border-white/10 bg-black">
-          <video
-            key={videoUrl}
-            className="h-64 w-full bg-black object-cover"
-            src={videoUrl}
-            autoPlay
-            loop
-            muted
-            playsInline
-            controls
-            preload="metadata"
-          />
+          {mediaKind === 'video' ? (
+            <video
+              key={videoUrl}
+              className="h-52 w-full bg-black object-cover sm:h-64"
+              src={videoUrl}
+              autoPlay
+              loop
+              muted
+              playsInline
+              controls
+              preload="metadata"
+            />
+          ) : (
+            <img
+              src={videoUrl}
+              alt={videoLabel || label}
+              className="h-52 w-full bg-dark-900 object-contain p-2 sm:h-64"
+              loading="lazy"
+            />
+          )}
+          <div className="border-t border-white/10 bg-dark-900/85 px-3 py-2 text-[11px] text-white/45">
+            {mediaKind === 'video' ? 'Midia real em loop' : 'Referencia visual licenciada'}
+          </div>
         </div>
       ) : (
         <div className="exercise-visualizer">

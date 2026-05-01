@@ -105,7 +105,7 @@ export default function StudentPayments() {
           </div>
         ) : (
           <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="space-y-3">
+            <div className="order-2 space-y-3 lg:order-1">
               {payments.map((payment) => (
                 <button
                   key={payment._id}
@@ -135,7 +135,7 @@ export default function StudentPayments() {
               ))}
             </div>
 
-            <div className="card">
+            <div className="card order-1 lg:order-2">
               {selectedPayment ? (
                 <div className="space-y-4">
                   <div className="flex items-start justify-between gap-3">
@@ -201,7 +201,7 @@ export default function StudentPayments() {
 
                           <div className="rounded-xl border border-white/10 bg-dark-900/60 p-3">
                             <p className="text-[11px] uppercase tracking-[0.2em] text-white/30">Pix copia e cola</p>
-                            <p className="mt-2 break-all font-mono text-xs text-white/80">
+                            <p className="mt-2 max-h-32 overflow-y-auto break-all font-mono text-xs text-white/80">
                               {activeCharge.qrCode}
                             </p>
                           </div>

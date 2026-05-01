@@ -69,6 +69,7 @@ export default function WorkoutSession() {
       const exList = found.exercises.map(ex => ({
         exerciseId: ex.exerciseId,
         animationKey: ex.animationKey,
+        mediaKind: ex.mediaKind,
         videoUrl: ex.videoUrl,
         videoSourceUrl: ex.videoSourceUrl,
         videoAttribution: ex.videoAttribution,
@@ -149,16 +150,18 @@ export default function WorkoutSession() {
     <Layout title={workout.name}>
       <div className="max-w-2xl mx-auto space-y-5">
         {/* Header bar */}
-        <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <button onClick={() => navigate('/student')} className="flex items-center gap-1 text-white/40 hover:text-white transition-colors text-sm">
             <ChevronLeft size={16} /> Voltar
           </button>
-          <WorkoutTimer onTick={t => { totalTime.current = t }} />
-          <button onClick={saveProgress} disabled={saving}
-            className="btn-secondary text-sm py-2 px-3">
-            <Save size={14} />
-            {saving ? 'Salvando...' : 'Salvar'}
-          </button>
+          <div className="flex items-center gap-2 sm:ml-auto">
+            <WorkoutTimer onTick={t => { totalTime.current = t }} />
+            <button onClick={saveProgress} disabled={saving}
+              className="btn-secondary text-sm py-2 px-3">
+              <Save size={14} />
+              {saving ? 'Salvando...' : 'Salvar'}
+            </button>
+          </div>
         </div>
 
         {/* Progress */}

@@ -98,7 +98,7 @@ export default function StudentTrainer() {
                 ))}
               </div>
 
-              <button type="button" onClick={saveTeacher} disabled={saving} className="btn-primary w-full">
+              <button type="button" onClick={saveTeacher} disabled={saving} className="btn-primary sticky bottom-24 w-full lg:static">
                 {saving ? 'Salvando...' : 'Confirmar personal'}
               </button>
             </div>

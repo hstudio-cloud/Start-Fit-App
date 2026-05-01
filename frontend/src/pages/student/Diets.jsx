@@ -71,7 +71,7 @@ export default function StudentDiets() {
                 <div className="grid gap-3 md:grid-cols-2">
                   {diet.meals?.map((meal, index) => (
                     <div key={`${diet._id}-${index}`} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                      <div className="flex items-center justify-between gap-3">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-2 text-white">
                           <Soup size={16} className="text-brand-300" />
                           <p className="font-semibold">{meal.title}</p>

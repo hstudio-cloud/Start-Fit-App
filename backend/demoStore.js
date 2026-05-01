@@ -148,6 +148,7 @@ function buildStore() {
           ...exercise,
           exerciseId: match?.id || '',
           animationKey: match?.animationKey || inferAnimationKey(exercise.name, exercise.muscleGroup),
+          mediaKind: match?.mediaKind || 'video',
           videoUrl: match?.videoUrl || '',
           videoSourceUrl: match?.videoSourceUrl || '',
           videoAttribution: match?.videoAttribution || '',
