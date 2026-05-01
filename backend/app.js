@@ -39,14 +39,27 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/admin', require('./routes/admin'));
-app.use('/api/student', require('./routes/student'));
-app.use('/api/teacher', require('./routes/teacher'));
+const authRoutes = require('./routes/auth');
+const adminRoutes = require('./routes/admin');
+const studentRoutes = require('./routes/student');
+const teacherRoutes = require('./routes/teacher');
 
-app.get('/api/health', (req, res) => {
+app.use('/auth', authRoutes);
+app.use('/admin', adminRoutes);
+app.use('/student', studentRoutes);
+app.use('/teacher', teacherRoutes);
+
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/student', studentRoutes);
+app.use('/api/teacher', teacherRoutes);
+
+function healthHandler(req, res) {
   res.json({ status: 'StartFit API running', timestamp: new Date() });
-});
+}
+
+app.get('/health', healthHandler);
+app.get('/api/health', healthHandler);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
