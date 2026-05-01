@@ -1,11 +1,12 @@
 const app = require('./app');
 const connectToDatabase = require('./db');
+const { isDemoMode } = require('./demoStore');
 
 const PORT = process.env.PORT || 5000;
 
-connectToDatabase()
+Promise.resolve(isDemoMode ? null : connectToDatabase())
   .then(() => {
-    console.log('MongoDB conectado');
+    console.log(isDemoMode ? 'StartFit API rodando em demo mode' : 'MongoDB conectado');
     app.listen(PORT, () => {
       console.log(`StartFit API rodando na porta ${PORT}`);
     });

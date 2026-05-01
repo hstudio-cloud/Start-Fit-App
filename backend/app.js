@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectToDatabase = require('./db');
+const { isDemoMode } = require('./demoStore');
+const demoApi = require('./demoApi');
 
 dotenv.config();
 
@@ -41,6 +43,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(async (req, res, next) => {
+  if (isDemoMode) {
+    return next();
+  }
+
   try {
     await connectToDatabase();
     next();
@@ -49,23 +55,27 @@ app.use(async (req, res, next) => {
   }
 });
 
-const authRoutes = require('./routes/auth');
-const adminRoutes = require('./routes/admin');
-const studentRoutes = require('./routes/student');
-const teacherRoutes = require('./routes/teacher');
+if (isDemoMode) {
+  app.use(demoApi);
+} else {
+  const authRoutes = require('./routes/auth');
+  const adminRoutes = require('./routes/admin');
+  const studentRoutes = require('./routes/student');
+  const teacherRoutes = require('./routes/teacher');
 
-app.use('/auth', authRoutes);
-app.use('/admin', adminRoutes);
-app.use('/student', studentRoutes);
-app.use('/teacher', teacherRoutes);
+  app.use('/auth', authRoutes);
+  app.use('/admin', adminRoutes);
+  app.use('/student', studentRoutes);
+  app.use('/teacher', teacherRoutes);
 
-app.use('/api/auth', authRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/student', studentRoutes);
-app.use('/api/teacher', teacherRoutes);
+  app.use('/api/auth', authRoutes);
+  app.use('/api/admin', adminRoutes);
+  app.use('/api/student', studentRoutes);
+  app.use('/api/teacher', teacherRoutes);
+}
 
 function healthHandler(req, res) {
-  res.json({ status: 'StartFit API running', timestamp: new Date() });
+  res.json({ status: `StartFit API running${isDemoMode ? ' (demo mode)' : ''}`, timestamp: new Date() });
 }
 
 app.get('/health', healthHandler);
