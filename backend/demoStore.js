@@ -149,6 +149,9 @@ function buildStore() {
           exerciseId: match?.id || '',
           animationKey: match?.animationKey || inferAnimationKey(exercise.name, exercise.muscleGroup),
           videoUrl: match?.videoUrl || '',
+          videoSourceUrl: match?.videoSourceUrl || '',
+          videoAttribution: match?.videoAttribution || '',
+          videoLabel: match?.videoLabel || '',
           order: exerciseIndex,
         };
       }),

@@ -1,4 +1,4 @@
-import { PlayCircle } from 'lucide-react'
+import { ExternalLink, PlayCircle } from 'lucide-react'
 
 const animationLabels = {
   push: 'Empurrar',
@@ -17,6 +17,9 @@ const animationLabels = {
 export default function ExerciseVisualizer({ exercise }) {
   const animationKey = exercise?.animationKey || 'generic'
   const videoUrl = exercise?.videoUrl
+  const videoSourceUrl = exercise?.videoSourceUrl
+  const videoAttribution = exercise?.videoAttribution
+  const videoLabel = exercise?.videoLabel
   const label = animationLabels[animationKey] || animationLabels.generic
 
   return (
@@ -39,22 +42,56 @@ export default function ExerciseVisualizer({ exercise }) {
         ) : null}
       </div>
 
-      <div className="exercise-visualizer">
-        <div className={`exercise-figure animation-${animationKey}`}>
-          <span className="figure-head" />
-          <span className="figure-body" />
-          <span className="figure-arm left" />
-          <span className="figure-arm right" />
-          <span className="figure-leg left" />
-          <span className="figure-leg right" />
-          <span className="figure-bar" />
-          <span className="figure-floor" />
+      {videoUrl ? (
+        <div className="overflow-hidden rounded-2xl border border-white/10 bg-black">
+          <video
+            key={videoUrl}
+            className="h-64 w-full bg-black object-cover"
+            src={videoUrl}
+            autoPlay
+            loop
+            muted
+            playsInline
+            controls
+            preload="metadata"
+          />
         </div>
-      </div>
+      ) : (
+        <div className="exercise-visualizer">
+          <div className={`exercise-figure animation-${animationKey}`}>
+            <span className="figure-head" />
+            <span className="figure-body" />
+            <span className="figure-arm left" />
+            <span className="figure-arm right" />
+            <span className="figure-leg left" />
+            <span className="figure-leg right" />
+            <span className="figure-bar" />
+            <span className="figure-floor" />
+          </div>
+        </div>
+      )}
 
-      <p className="mt-4 text-xs leading-relaxed text-white/50">
-        Use a animacao como referencia visual rapida. Se precisar, abra o video e confirme a execucao antes de iniciar a serie.
-      </p>
+      <div className="mt-4 space-y-2">
+        <p className="text-xs leading-relaxed text-white/50">
+          Use o video como referencia visual rapida para entender amplitude, ritmo e posicionamento antes de iniciar a serie.
+        </p>
+        {videoAttribution ? (
+          <div className="flex flex-col gap-2 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between">
+            <span>{videoAttribution}{videoLabel ? ` · ${videoLabel}` : ''}</span>
+            {videoSourceUrl ? (
+              <a
+                href={videoSourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-brand-300 hover:text-brand-200"
+              >
+                <ExternalLink size={12} />
+                Fonte
+              </a>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
     </div>
   )
 }
