@@ -18,6 +18,16 @@ function commonsAsset(kind, label, fileName, sourcePage, attribution) {
   };
 }
 
+function fallbackAnimationAsset(label) {
+  return {
+    mediaKind: 'fallback',
+    videoUrl: '',
+    videoSourceUrl: '',
+    videoAttribution: '',
+    videoLabel: label,
+  };
+}
+
 const mediaByExercise = {
   'supino reto com barra': commonsAsset(
     'video',
@@ -64,9 +74,9 @@ const mediaByExercise = {
   'puxada frontal': commonsAsset(
     'image',
     'Lat pulldown',
-    'Girl_doing_lat_pulldown_exercise.jpg',
-    'https://commons.wikimedia.org/wiki/File:Girl_doing_lat_pulldown_exercise.jpg',
-    'Photo CC BY 2.0 via Wikimedia Commons / Tyler Read'
+    'Wide-grip-lat-pull-down-2.gif',
+    'https://commons.wikimedia.org/wiki/File:Wide-grip-lat-pull-down-2.gif',
+    'Animation CC BY-SA via Wikimedia Commons / Everkinetic'
   ),
   'remada curvada com barra': commonsAsset(
     'video',
@@ -98,10 +108,10 @@ const mediaByExercise = {
   ),
   'puxada no cabo baixo': commonsAsset(
     'image',
-    'Cable row reference',
-    'Girl_doing_lat_pulldown_exercise.jpg',
-    'https://commons.wikimedia.org/wiki/File:Girl_doing_lat_pulldown_exercise.jpg',
-    'Photo CC BY 2.0 via Wikimedia Commons / Tyler Read'
+    'Row reference',
+    'Bent-over_row_-_exercise_demonstration_video.webm',
+    'https://commons.wikimedia.org/wiki/File:Bent-over_row_-_exercise_demonstration_video.webm',
+    'Video CC BY 3.0 via Wikimedia Commons / FitnessScape'
   ),
   'desenvolvimento com halteres': commonsAsset(
     'image',
@@ -224,10 +234,10 @@ const mediaByExercise = {
   ),
   'afundo com halteres': commonsAsset(
     'image',
-    'Dumbbell lunge',
-    'Dumbbell_lunges.jpg',
-    'https://commons.wikimedia.org/wiki/File:Dumbbell_lunges.jpg',
-    'Photo CC BY 2.0 via Wikimedia Commons / PTPioneer'
+    'Lunge',
+    'Lunge-CDC_strength_training_for_older_adults.gif',
+    'https://commons.wikimedia.org/wiki/File:Lunge-CDC_strength_training_for_older_adults.gif',
+    'Public domain animation via Wikimedia Commons / CDC'
   ),
   'cadeira extensora': commonsAsset(
     'video',
@@ -264,19 +274,13 @@ const mediaByExercise = {
     'https://commons.wikimedia.org/wiki/File:Squat_-_exercise_demonstration_video.webm',
     'Video CC BY 3.0 via Wikimedia Commons / FitnessScape'
   ),
-  prancha: commonsAsset(
-    'image',
-    'Plank',
-    'Girl_exercising_doing_a_plank.jpg',
-    'https://commons.wikimedia.org/wiki/File:Girl_exercising_doing_a_plank.jpg',
-    'Photo CC BY 2.0 via Wikimedia Commons / Tyler Read'
-  ),
+  prancha: fallbackAnimationAsset('Plank'),
   'crunch abdominal': commonsAsset(
     'image',
     'Crunch',
-    'Crunch.JPG',
-    'https://commons.wikimedia.org/wiki/Category:Crunches',
-    'Photo via Wikimedia Commons'
+    'Sit-ups_or_Crunch.gif',
+    'https://commons.wikimedia.org/wiki/File:Sit-ups_or_Crunch.gif',
+    'Animated crunch via Wikimedia Commons'
   ),
   'elevacao de pernas': commonsAsset(
     'video',
@@ -287,38 +291,32 @@ const mediaByExercise = {
   ),
   'russian twist': commonsAsset(
     'image',
-    'Abdominal reference',
-    'Crunch.JPG',
-    'https://commons.wikimedia.org/wiki/Category:Crunches',
-    'Photo via Wikimedia Commons'
+    'Crunch pattern',
+    'Crunches-1.gif',
+    'https://commons.wikimedia.org/wiki/File:Crunches-1.png',
+    'Animation CC BY-SA via Wikimedia Commons / Everkinetic'
   ),
-  'mountain climber': commonsAsset(
-    'image',
-    'Core floor reference',
-    'Girl_exercising_doing_a_plank.jpg',
-    'https://commons.wikimedia.org/wiki/File:Girl_exercising_doing_a_plank.jpg',
-    'Photo CC BY 2.0 via Wikimedia Commons / Tyler Read'
-  ),
+  'mountain climber': fallbackAnimationAsset('Core motion'),
   'abdominal na maquina': commonsAsset(
     'image',
     'Crunch reference',
-    'Crunch.JPG',
-    'https://commons.wikimedia.org/wiki/Category:Crunches',
-    'Photo via Wikimedia Commons'
+    'Crunches-1.gif',
+    'https://commons.wikimedia.org/wiki/File:Crunches-1.png',
+    'Animation CC BY-SA via Wikimedia Commons / Everkinetic'
   ),
   esteira: commonsAsset(
     'image',
     'Cardio treadmill',
-    'Girl_walking_on_treadmill.jpg',
-    'https://commons.wikimedia.org/wiki/Category:Women_exercising',
-    'Photo via Wikimedia Commons'
+    'Man_on_a_Treadmill_GIF_Animation_Loop.gif',
+    'https://commons.wikimedia.org/wiki/File:Man_on_a_Treadmill_GIF_Animation_Loop.gif',
+    'Animation CC BY-SA 4.0 via Wikimedia Commons / Videoplasty.com'
   ),
   'bicicleta ergometrica': commonsAsset(
     'image',
     'Exercise bike',
-    'Girl_exercising_on_spin_bike.jpg',
-    'https://commons.wikimedia.org/wiki/Category:Women_exercising',
-    'Photo via Wikimedia Commons'
+    'Man_on_an_Exercise_Bike_GIF_Animation_Loop.gif',
+    'https://commons.wikimedia.org/wiki/File:Man_on_an_Exercise_Bike_GIF_Animation_Loop.gif',
+    'Animation CC BY-SA 4.0 via Wikimedia Commons / Videoplasty.com'
   ),
   burpee: commonsAsset(
     'video',
@@ -343,10 +341,10 @@ const mediaByExercise = {
   ),
   eliptico: commonsAsset(
     'image',
-    'Elliptical cardio',
-    'Girl_doing_elliptical_cardio_exercise.jpg',
-    'https://commons.wikimedia.org/wiki/Category:Women_exercising',
-    'Photo via Wikimedia Commons'
+    'Elliptical motion',
+    'Elliptical_motion.gif',
+    'https://commons.wikimedia.org/wiki/File:Elliptical_motion.gif',
+    'CC0 animation via Wikimedia Commons'
   ),
 };
 
