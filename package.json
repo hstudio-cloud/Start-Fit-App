@@ -1,0 +1,11 @@
+{
+  "name": "start-fit-app",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace frontend"
+  }
+}
