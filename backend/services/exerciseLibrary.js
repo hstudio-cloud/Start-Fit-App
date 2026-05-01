@@ -67,9 +67,9 @@ const mediaByExercise = {
   'crossover no cabo': commonsAsset(
     'image',
     'Cable crossover',
-    'Chest_flies_with_cable_machine_-_cable_crossover_flies.jpg',
-    'https://commons.wikimedia.org/wiki/File:Chest_flies_with_cable_machine_-_cable_crossover_flies.jpg',
-    'Photo CC BY 2.0 via Wikimedia Commons'
+    'DumbbellFlye.gif',
+    'https://commons.wikimedia.org/wiki/Category:Chest_fly',
+    'Animation CC BY-SA via Wikimedia Commons / Everkinetic'
   ),
   'puxada frontal': commonsAsset(
     'image',
@@ -93,11 +93,11 @@ const mediaByExercise = {
     'Video CC BY 3.0 via Wikimedia Commons / FitnessScape'
   ),
   'remada com halter': commonsAsset(
-    'image',
-    'Dumbbell row',
-    'DumbbellBentOverRow.JPG',
-    'https://commons.wikimedia.org/wiki/File:DumbbellBentOverRow.JPG',
-    'Image CC BY-SA 3.0 via Wikimedia Commons'
+    'video',
+    'Dumbbell row reference',
+    'Bent-over_row_-_exercise_demonstration_video.webm',
+    'https://commons.wikimedia.org/wiki/File:Bent-over_row_-_exercise_demonstration_video.webm',
+    'Video CC BY 3.0 via Wikimedia Commons / FitnessScape'
   ),
   'levantamento terra': commonsAsset(
     'video',
@@ -114,26 +114,14 @@ const mediaByExercise = {
     'Video CC BY 3.0 via Wikimedia Commons / FitnessScape'
   ),
   'desenvolvimento com halteres': commonsAsset(
-    'image',
-    'Dumbbell shoulder press',
-    'Girl_doing_dumbbell_shoulder_press_02.jpg',
-    'https://commons.wikimedia.org/wiki/File:Girl_doing_dumbbell_shoulder_press_02.jpg',
-    'Photo CC BY 2.0 via Wikimedia Commons / Tyler Read'
+    'video',
+    'Dumbbell shoulder press reference',
+    'Shoulder_press_-_exercise_demonstration_video.webm',
+    'https://commons.wikimedia.org/wiki/File:Shoulder_press_-_exercise_demonstration_video.webm',
+    'Video CC BY 3.0 via Wikimedia Commons / FitnessScape'
   ),
-  'elevacao lateral': commonsAsset(
-    'image',
-    'Lateral raise',
-    'DumbbellLateralRaise.JPG',
-    'https://commons.wikimedia.org/wiki/File:DumbbellLateralRaise.JPG',
-    'Image CC BY-SA 3.0 via Wikimedia Commons'
-  ),
-  'elevacao frontal': commonsAsset(
-    'image',
-    'Front dumbbell raise',
-    'Girl_exercising_with_front_dumbbell_raises.jpg',
-    'https://commons.wikimedia.org/wiki/File:Girl_exercising_with_front_dumbbell_raises.jpg',
-    'Photo CC BY 2.0 via Wikimedia Commons / PTPioneer'
-  ),
+  'elevacao lateral': fallbackAnimationAsset('Lateral raise'),
+  'elevacao frontal': fallbackAnimationAsset('Front raise'),
   'desenvolvimento com barra': commonsAsset(
     'video',
     'Shoulder press',
@@ -141,13 +129,7 @@ const mediaByExercise = {
     'https://commons.wikimedia.org/wiki/File:Shoulder_press_-_exercise_demonstration_video.webm',
     'Video CC BY 3.0 via Wikimedia Commons / FitnessScape'
   ),
-  'crucifixo invertido': commonsAsset(
-    'image',
-    'Shoulder rear-delt reference',
-    'Girl_exercising_shoulders.jpg',
-    'https://commons.wikimedia.org/wiki/File:Girl_exercising_shoulders.jpg',
-    'Photo CC BY 2.0 via Wikimedia Commons / Tyler Read'
-  ),
+  'crucifixo invertido': fallbackAnimationAsset('Rear delt fly'),
   'rosca direta com barra': commonsAsset(
     'image',
     'Standing barbell curl',
@@ -179,23 +161,23 @@ const mediaByExercise = {
   'rosca no cabo': commonsAsset(
     'image',
     'Cable bicep curl',
-    'Girl_doing_cable_bicep_curl_exercise.jpg',
-    'https://commons.wikimedia.org/wiki/File:Girl_doing_cable_bicep_curl_exercise.jpg',
-    'Photo CC BY 2.0 via Wikimedia Commons / Tyler Read'
+    'Alternate-bicep-curl-1.gif',
+    'https://commons.wikimedia.org/wiki/File:Alternate-bicep-curl-1.png',
+    'Animation CC BY-SA via Wikimedia Commons / Everkinetic'
   ),
   'triceps testa': commonsAsset(
     'image',
     'Dumbbell triceps extension',
-    'DumbbellTricepsExtension.JPG',
-    'https://commons.wikimedia.org/wiki/File:DumbbellTricepsExtension.JPG',
-    'Image CC BY-SA 3.0 via Wikimedia Commons'
+    'Triceps-kickback-1.gif',
+    'https://commons.wikimedia.org/wiki/File:Triceps-kickback-1.gif',
+    'Animation CC BY-SA via Wikimedia Commons / Everkinetic'
   ),
   'triceps pulley': commonsAsset(
     'image',
     'Cable triceps extension',
-    'Cable_overhead_biceps_extension,_blonde_girl_is_exercising_in_the_gym.jpg',
-    'https://commons.wikimedia.org/wiki/File:Cable_overhead_biceps_extension,_blonde_girl_is_exercising_in_the_gym.jpg',
-    'Photo via Wikimedia Commons'
+    'Triceps-kickback-1.gif',
+    'https://commons.wikimedia.org/wiki/File:Triceps-kickback-1.gif',
+    'Animation CC BY-SA via Wikimedia Commons / Everkinetic'
   ),
   'mergulho no banco': commonsAsset(
     'image',
@@ -207,9 +189,9 @@ const mediaByExercise = {
   'extensao com halter': commonsAsset(
     'image',
     'Dumbbell triceps extension',
-    'DumbbellTricepsExtension.JPG',
-    'https://commons.wikimedia.org/wiki/File:DumbbellTricepsExtension.JPG',
-    'Image CC BY-SA 3.0 via Wikimedia Commons'
+    'Triceps-kickback-1.gif',
+    'https://commons.wikimedia.org/wiki/File:Triceps-kickback-1.gif',
+    'Animation CC BY-SA via Wikimedia Commons / Everkinetic'
   ),
   'triceps coice': commonsAsset(
     'image',
@@ -225,13 +207,7 @@ const mediaByExercise = {
     'https://commons.wikimedia.org/wiki/File:Squat_-_exercise_demonstration_video.webm',
     'Video CC BY 3.0 via Wikimedia Commons / FitnessScape'
   ),
-  'leg press 45°': commonsAsset(
-    'image',
-    'Leg press',
-    'Leg_press.jpg',
-    'https://commons.wikimedia.org/wiki/File:Leg_press.jpg',
-    'Photo via Wikimedia Commons'
-  ),
+  'leg press 45°': fallbackAnimationAsset('Leg press'),
   'afundo com halteres': commonsAsset(
     'image',
     'Lunge',
@@ -391,7 +367,7 @@ const exerciseMediaMatchers = [
   { terms: ['extensao com halter'], media: mediaByExercise['extensao com halter'] },
   { terms: ['triceps coice'], media: mediaByExercise['triceps coice'] },
   { terms: ['agachamento livre'], media: mediaByExercise['agachamento livre'] },
-  { terms: ['leg press'], media: mediaByExercise['leg press 45Â°'] },
+  { terms: ['leg press'], media: mediaByExercise['leg press 45°'] },
   { terms: ['afundo'], media: mediaByExercise['afundo com halteres'] },
   { terms: ['cadeira extensora'], media: mediaByExercise['cadeira extensora'] },
   { terms: ['cadeira flexora'], media: mediaByExercise['cadeira flexora'] },
