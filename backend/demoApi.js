@@ -130,6 +130,7 @@ addRoute('post', '/auth/register', (req, res) => {
       totalWorkouts: 0,
       lastWorkout: null,
       notes: [],
+      trainerFeedbacks: [],
       createdAt: new Date(),
     });
   }
@@ -147,19 +148,46 @@ addRoute('get', '/auth/me', (req, res) => {
 addRoute('get', '/admin/dashboard', (req, res) => {
   const user = auth(req, res, ['admin']);
   if (!user) return;
+  const now = Date.now();
+  const activeStudents = store.students.filter((student) => student.lastWorkout && now - new Date(student.lastWorkout).getTime() <= 7 * 24 * 60 * 60 * 1000);
+  const inactiveStudents = store.students.filter((student) => !student.lastWorkout || now - new Date(student.lastWorkout).getTime() > 14 * 24 * 60 * 60 * 1000);
   const stats = {
     totalStudents: store.students.length,
-    activeStudents: store.students.filter((student) => student.lastWorkout).length,
+    activeStudents: activeStudents.length,
     overduePayments: store.payments.filter((payment) => payment.status === 'vencido').length,
     upcomingPayments: store.payments.filter((payment) => payment.status === 'pendente').length,
-    inactiveStudents: store.students.filter((student) => !student.lastWorkout).length,
+    inactiveStudents: inactiveStudents.length,
+    improvedStudents: store.students.filter((student) => {
+      const entries = store.progress
+        .filter((entry) => entry.student === student._id)
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
+      return entries.length > 1 && entries[entries.length - 1].weight !== entries[0].weight;
+    }).length,
   };
   const recentSessions = store.sessions
     .filter((session) => session.completed)
     .sort((a, b) => new Date(b.date) - new Date(a.date))
     .slice(0, 10)
     .map((session) => ({ ...clone(session), student: enrichStudent(findStudentById(session.student)) }));
-  res.json({ success: true, stats, recentSessions });
+  const studentHighlights = store.students.map((student) => {
+    const account = findUserById(student.user);
+    const daysInactive = student.lastWorkout ? Math.floor((now - new Date(student.lastWorkout).getTime()) / 86400000) : null;
+    const payment = store.payments
+      .filter((entry) => entry.student === student._id)
+      .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))[0];
+
+    return {
+      studentId: student._id,
+      name: account?.name || 'Aluno',
+      email: account?.email || '',
+      totalWorkouts: student.totalWorkouts || 0,
+      monthlyFee: student.monthlyFee,
+      paymentStatus: payment?.status || 'pendente',
+      daysInactive,
+      status: !account?.active ? 'inativo' : daysInactive === null ? 'sem_treino' : daysInactive > 14 ? 'baixa_frequencia' : 'engajado',
+    };
+  });
+  res.json({ success: true, stats, recentSessions, studentHighlights });
 });
 
 addRoute('get', '/admin/students', (req, res) => {
@@ -190,6 +218,7 @@ addRoute('post', '/admin/students', (req, res) => {
     totalWorkouts: 0,
     lastWorkout: null,
     notes: [],
+    trainerFeedbacks: [],
     createdAt: new Date(),
   };
   store.students.push(student);
@@ -385,7 +414,18 @@ addRoute('post', '/student/questionnaire', (req, res) => {
   store.progress.push({ _id: nextId('progress'), student: student._id, weight, height, imc, date: new Date(), notes: '' });
   store.workouts = store.workouts.filter((workout) => workout.student !== student._id);
   generateWorkouts(student.questionnaire).forEach((plan) => {
-    store.workouts.push({ _id: nextId('workout'), student: student._id, generatedBy: 'ai', isActive: true, createdAt: new Date(), ...plan });
+    store.workouts.push({
+      _id: nextId('workout'),
+      student: student._id,
+      generatedBy: 'ai',
+      isActive: true,
+      createdAt: new Date(),
+      ...plan,
+      exercises: (plan.exercises || []).map((exercise, index) => ({
+        ...exercise,
+        order: index,
+      })),
+    });
   });
   res.json({ success: true, message: 'Questionario salvo e treinos gerados com sucesso!', student: enrichStudent(student) });
 });

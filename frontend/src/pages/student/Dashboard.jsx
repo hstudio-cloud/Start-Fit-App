@@ -1,40 +1,56 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../../context/AuthContext'
-import Layout from '../../components/Layout'
-import api from '../../services/api'
-import {
-  Dumbbell, TrendingUp, CreditCard, Droplets, Apple,
-  Bell, ChevronRight, Flame, Clock, Target, Award,
-  AlertTriangle, CheckCircle2, Play, Scale,
-} from 'lucide-react'
-import toast from 'react-hot-toast'
+import { useEffect, useMemo, useState } from 'react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import {
+  Apple, Award, Bell, CheckCircle2, ChevronRight, Clock, CreditCard, Droplets, Dumbbell,
+  Flame, Play, Scale, Sparkles, Target, TrendingUp,
+} from 'lucide-react'
+import toast from 'react-hot-toast'
+import { useNavigate } from 'react-router-dom'
+import Layout from '../../components/Layout'
+import ExerciseAnimation from '../../components/ExerciseAnimation'
+import api from '../../services/api'
+import { useAuth } from '../../context/AuthContext'
+import { buildStudentNotifications } from '../../data/demoNotifications'
+
+const toneClasses = {
+  danger: 'border-red-400/20 bg-red-500/10 text-red-300',
+  warning: 'border-amber-400/20 bg-amber-500/10 text-amber-300',
+  success: 'border-emerald-400/20 bg-emerald-500/10 text-emerald-300',
+  info: 'border-sky-400/20 bg-sky-500/10 text-sky-300',
+  brand: 'border-brand-400/20 bg-brand-500/10 text-brand-300',
+}
 
 const IMCGauge = ({ imc, category }) => {
   if (!imc) return null
-  const getColor = () => {
-    if (imc < 18.5) return '#60a5fa'
-    if (imc < 25) return '#34d399'
-    if (imc < 30) return '#fbbf24'
-    if (imc < 35) return '#fb923c'
-    return '#f87171'
-  }
+
+  const progress = Math.min((Number(imc) / 40) * 100, 100)
+  const color = imc < 18.5 ? '#60a5fa' : imc < 25 ? '#34d399' : imc < 30 ? '#fbbf24' : '#f87171'
+
   return (
     <div className="flex items-center gap-4">
-      <div className="relative w-16 h-16">
-        <svg viewBox="0 0 60 60" className="w-full h-full">
-          <circle cx="30" cy="30" r="24" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="6" />
-          <circle cx="30" cy="30" r="24" fill="none" stroke={getColor()} strokeWidth="6"
-            strokeDasharray={`${Math.min((imc / 40) * 150, 150)} 150`}
-            strokeLinecap="round" transform="rotate(-90 30 30)" />
+      <div className="relative h-20 w-20">
+        <svg viewBox="0 0 64 64" className="h-full w-full -rotate-90">
+          <circle cx="32" cy="32" r="24" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="8" />
+          <circle
+            cx="32"
+            cy="32"
+            r="24"
+            fill="none"
+            stroke={color}
+            strokeWidth="8"
+            strokeLinecap="round"
+            strokeDasharray={`${progress * 1.5} 150`}
+          />
         </svg>
-        <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white">{imc}</span>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-lg font-black text-white">{imc}</span>
+          <span className="text-[10px] uppercase tracking-[0.2em] text-white/30">IMC</span>
+        </div>
       </div>
       <div>
-        <p className="text-white font-semibold text-sm">IMC: {imc}</p>
-        <p className="text-xs" style={{ color: getColor() }}>{category}</p>
+        <p className="text-sm font-semibold text-white">{category}</p>
+        <p className="mt-1 text-xs text-white/45">Com base no peso e altura do cadastro demo.</p>
       </div>
     </div>
   )
@@ -58,7 +74,7 @@ export default function StudentDashboard() {
     fetchData()
   }, [student])
 
-  const fetchData = async () => {
+  async function fetchData() {
     try {
       const [workoutRes, paymentsRes, sessionsRes, dietsRes, teachersRes] = await Promise.all([
         api.get('/student/workout/today'),
@@ -75,301 +91,307 @@ export default function StudentDashboard() {
         list: teachersRes.data.teachers || [],
         selectedTeacherId: teachersRes.data.selectedTeacherId || '',
       })
-    } catch (err) {
-      toast.error('Erro ao carregar dados.')
+    } catch {
+      toast.error('Erro ao carregar dados do dashboard.')
     } finally {
       setLoading(false)
     }
   }
 
-  const latestPayment = payments[0]
-  const paymentStatus = latestPayment?.status
+  const selectedTeacher = teachers.list.find((item) => item._id === teachers.selectedTeacherId)
   const activeDiet = diets[0]
-  const selectedTeacher = teachers.list.find((entry) => entry._id === teachers.selectedTeacherId)
-  const weekSessions = sessions.filter(s => {
-    const d = new Date(s.date)
-    const now = new Date()
-    const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000)
-    return d >= weekAgo
+  const latestPayment = payments[0]
+  const currentWeekSessions = sessions.filter((session) => {
+    const sessionDate = new Date(session.date).getTime()
+    return Date.now() - sessionDate <= 7 * 24 * 60 * 60 * 1000
+  })
+  const notifications = buildStudentNotifications({
+    payments,
+    workout: todayWorkout,
+    student,
+    diets,
   })
 
-  const dayNames = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
-  const today = new Date().getDay()
+  const estimatedVolume = useMemo(() => (
+    sessions.slice(0, 4).reduce((acc, session) => (
+      acc + (session.exercises || []).reduce((exerciseAcc, exercise) => {
+        if (Array.isArray(exercise.seriesLog)) {
+          return exerciseAcc + exercise.seriesLog.reduce((setAcc, item) => setAcc + (Number(item.load) || 0) * (Number.parseInt(item.reps, 10) || 0), 0)
+        }
+        return exerciseAcc + ((Number(exercise.load) || 0) * (Number.parseInt(exercise.reps, 10) || 0))
+      }, 0)
+    ), 0)
+  ), [sessions])
 
-  const reminders = [
-    { icon: Droplets, text: 'Beba 2L de água hoje', color: 'text-blue-400', bg: 'bg-blue-400/10 border-blue-400/20' },
-    { icon: Apple, text: 'Não esqueça da refeição pré-treino', color: 'text-emerald-400', bg: 'bg-emerald-400/10 border-emerald-400/20' },
-    { icon: Bell, text: paymentStatus === 'vencido' ? '⚠️ Mensalidade vencida!' : 'Mensalidade em dia', color: paymentStatus === 'vencido' ? 'text-red-400' : 'text-emerald-400', bg: paymentStatus === 'vencido' ? 'bg-red-400/10 border-red-400/20' : 'bg-emerald-400/10 border-emerald-400/20' },
-  ]
-
-  if (loading) return (
-    <Layout title="Dashboard">
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    </Layout>
-  )
+  if (loading) {
+    return (
+      <Layout title="Meu Dashboard">
+        <div className="flex h-64 items-center justify-center">
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
+        </div>
+      </Layout>
+    )
+  }
 
   return (
     <Layout title="Meu Dashboard">
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* Greeting */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-white">
-              Olá, {user?.name?.split(' ')[0]}! 👋
-            </h2>
-            <p className="text-white/40 text-sm mt-1">
-              {format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR })}
-            </p>
-          </div>
-          <div className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-500/10 border border-brand-500/20">
-            <Flame size={16} className="text-brand-300" />
-            <span className="text-brand-300 text-sm font-semibold">{student?.totalWorkouts || 0} treinos</span>
-          </div>
-        </div>
-
-        {/* Stats row */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { label: 'Treinos Realizados', value: student?.totalWorkouts || 0, icon: Dumbbell, color: 'brand' },
-            { label: 'Esta Semana', value: weekSessions.length, icon: Flame, color: 'amber' },
-            { label: 'IMC Atual', value: student?.imc || '--', icon: Scale, color: 'emerald' },
-            { label: 'Peso', value: student?.questionnaire?.weight ? `${student.questionnaire.weight}kg` : '--', icon: TrendingUp, color: 'purple' },
-          ].map((s) => (
-            <div key={s.label} className="stat-card">
-              <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-                s.color === 'brand' ? 'bg-brand-500/20 text-brand-300' :
-                s.color === 'amber' ? 'bg-amber-500/20 text-amber-400' :
-                s.color === 'emerald' ? 'bg-emerald-500/20 text-emerald-400' :
-                'bg-purple-500/20 text-purple-400'
-              }`}>
-                <s.icon size={18} />
+      <div className="mx-auto max-w-6xl space-y-6">
+        <section className="overflow-hidden rounded-[2rem] border border-brand-400/20 bg-[radial-gradient(circle_at_top_left,_rgba(0,180,216,0.22),_transparent_28%),linear-gradient(135deg,_rgba(7,11,16,0.98),_rgba(13,31,45,0.98))] p-5 shadow-[0_30px_80px_rgba(0,0,0,0.28)] sm:p-7">
+          <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-brand-400/20 bg-brand-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-brand-300">
+                <Sparkles size={13} />
+                Demo premium mobile
               </div>
-              <p className="text-2xl font-bold text-white">{s.value}</p>
-              <p className="text-white/40 text-xs">{s.label}</p>
-            </div>
-          ))}
-        </div>
+              <h2 className="mt-4 text-3xl font-black tracking-tight text-white sm:text-4xl">
+                Ola, {user?.name?.split(' ')[0]}
+              </h2>
+              <p className="mt-2 text-sm text-white/55 sm:text-base">
+                {format(new Date(), "EEEE, dd 'de' MMMM", { locale: ptBR })}
+              </p>
+              <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/65">
+                Seu treino do dia, evolucao, dieta e pagamentos aparecem aqui com foco em uma experiencia de app real para apresentacao da StartFit.
+              </p>
 
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <button onClick={() => navigate('/student/payments')} className="card-sm text-left transition-colors hover:border-brand-500/30">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-white/30">Pix no app</p>
-                <p className="mt-2 text-lg font-bold text-white">Mensalidade</p>
-                <p className="mt-1 text-xs text-white/45">
-                  {latestPayment ? `Status ${paymentStatus}` : 'Sem cobrancas'}
-                </p>
-              </div>
-              <CreditCard size={18} className="text-brand-300" />
-            </div>
-          </button>
-
-          <button onClick={() => navigate('/student/diets')} className="card-sm text-left transition-colors hover:border-emerald-500/30">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-white/30">Plano alimentar</p>
-                <p className="mt-2 text-lg font-bold text-white">{activeDiet ? activeDiet.title : 'Dietas'}</p>
-                <p className="mt-1 text-xs text-white/45">
-                  {activeDiet ? `${activeDiet.meals?.length || 0} refeicoes planejadas` : 'Aguardando personal'}
-                </p>
-              </div>
-              <Apple size={18} className="text-emerald-400" />
-            </div>
-          </button>
-
-          <button onClick={() => navigate('/student/trainer')} className="card-sm text-left transition-colors hover:border-brand-500/30">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-white/30">Personal</p>
-                <p className="mt-2 text-lg font-bold text-white">{selectedTeacher?.name || 'Selecionar'}</p>
-                <p className="mt-1 text-xs text-white/45">
-                  {selectedTeacher ? 'Pode ajustar treinos e dar feedbacks' : 'Escolha um personal'}
-                </p>
-              </div>
-              <Award size={18} className="text-brand-300" />
-            </div>
-          </button>
-
-          <button
-            onClick={() => todayWorkout && navigate(`/student/workout/${todayWorkout._id}`)}
-            className="card-sm text-left transition-colors hover:border-amber-500/30"
-          >
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-white/30">Treino guiado</p>
-                <p className="mt-2 text-lg font-bold text-white">Animacao dos exercicios</p>
-                <p className="mt-1 text-xs text-white/45">
-                  Abra o treino para visualizar os movimentos
-                </p>
-              </div>
-              <Play size={18} className="text-amber-400" />
-            </div>
-          </button>
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Today's Workout */}
-          <div className="lg:col-span-2 card">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-white flex items-center gap-2">
-                <Dumbbell size={18} className="text-brand-300" />
-                Treino de Hoje
-              </h3>
-              <span className="text-xs text-white/30">{dayNames[today]}</span>
-            </div>
-
-            {todayWorkout ? (
-              <div>
-                <div className="flex items-start justify-between mb-4 p-4 rounded-xl bg-brand-500/10 border border-brand-500/20">
-                  <div>
-                    <h4 className="font-bold text-white text-lg">{todayWorkout.name}</h4>
-                    <div className="flex items-center gap-3 mt-2 text-sm text-white/50">
-                      <span className="flex items-center gap-1"><Clock size={13} /> {todayWorkout.estimatedDuration} min</span>
-                      <span className="flex items-center gap-1"><Target size={13} /> {todayWorkout.exercises?.length} exercícios</span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => navigate(`/student/workout/${todayWorkout._id}`)}
-                    className="btn-primary text-sm py-2 px-4">
-                    <Play size={16} />
-                    Iniciar
-                  </button>
+              <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-[0.2em] text-white/30">Treinos</p>
+                  <p className="mt-2 text-3xl font-black text-white">{student?.totalWorkouts || 0}</p>
+                  <p className="mt-1 text-xs text-white/45">historico acumulado</p>
                 </div>
-
-                <div className="space-y-2">
-                  {todayWorkout.exercises?.slice(0, 4).map((ex, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-white/3 border border-white/5 hover:border-white/10 transition-colors">
-                      <div className="w-7 h-7 rounded-lg bg-dark-600 flex items-center justify-center text-xs font-bold text-brand-400">{i + 1}</div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-white text-sm font-medium truncate">{ex.name}</p>
-                        <p className="text-white/40 text-xs">{ex.sets}x {ex.reps}</p>
-                      </div>
-                      <span className="text-xs text-white/30 capitalize hidden sm:block">{ex.muscleGroup}</span>
-                    </div>
-                  ))}
-                  {todayWorkout.exercises?.length > 4 && (
-                    <p className="text-center text-white/30 text-xs py-2">
-                      + {todayWorkout.exercises.length - 4} exercícios
-                    </p>
-                  )}
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-[0.2em] text-white/30">Semana</p>
+                  <p className="mt-2 text-3xl font-black text-white">{currentWeekSessions.length}</p>
+                  <p className="mt-1 text-xs text-white/45">sessoes registradas</p>
+                </div>
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-[0.2em] text-white/30">Volume</p>
+                  <p className="mt-2 text-3xl font-black text-white">{estimatedVolume || 0}</p>
+                  <p className="mt-1 text-xs text-white/45">kg estimados recentes</p>
                 </div>
               </div>
-            ) : (
-              <div className="text-center py-10 text-white/30">
-                <Dumbbell size={40} className="mx-auto mb-3 opacity-30" />
-                <p className="font-medium">Nenhum treino para hoje</p>
-                <p className="text-xs mt-1">Aproveite para descansar! 💪</p>
-              </div>
-            )}
-          </div>
+            </div>
 
-          {/* Right column */}
-          <div className="space-y-4">
-            {/* IMC Card */}
-            <div className="card">
-              <h3 className="font-bold text-white text-sm mb-3 flex items-center gap-2">
-                <Scale size={16} className="text-brand-300" /> IMC & Composição
-              </h3>
-              {student?.imc ? (
+            <div className="rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-4 backdrop-blur-sm">
+              {todayWorkout ? (
                 <>
-                  <IMCGauge imc={student.imc} category={student.imcCategory} />
-                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                    <div className="p-2 rounded-lg bg-white/5 text-center">
-                      <p className="text-white/40">Peso</p>
-                      <p className="text-white font-bold">{student.questionnaire?.weight}kg</p>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.22em] text-white/30">Treino de hoje</p>
+                      <h3 className="mt-2 text-2xl font-black text-white">{todayWorkout.name}</h3>
+                      <p className="mt-1 text-sm text-white/50">{todayWorkout.objective?.replace('_', ' ')}</p>
                     </div>
-                    <div className="p-2 rounded-lg bg-white/5 text-center">
-                      <p className="text-white/40">Altura</p>
-                      <p className="text-white font-bold">{student.questionnaire?.height}cm</p>
+                    <span className="badge-info">{todayWorkout.exercises?.length || 0} exercicios</span>
+                  </div>
+
+                  <div className="mt-4">
+                    <ExerciseAnimation exercise={todayWorkout.exercises?.[0]} size="lg" highlighted />
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                    <div className="rounded-2xl border border-white/10 bg-dark-900/40 p-3 text-white/70">
+                      <div className="flex items-center gap-2"><Clock size={14} className="text-brand-300" /> {todayWorkout.estimatedDuration} min</div>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-dark-900/40 p-3 text-white/70">
+                      <div className="flex items-center gap-2"><Target size={14} className="text-emerald-400" /> foco guiado</div>
                     </div>
                   </div>
+
+                  <button type="button" onClick={() => navigate(`/student/workout/${todayWorkout._id}`)} className="btn-primary mt-4 w-full">
+                    <Play size={16} />
+                    Iniciar treino guiado
+                  </button>
                 </>
               ) : (
-                <p className="text-white/30 text-xs">Complete o questionário para ver seu IMC.</p>
+                <div className="flex h-full min-h-[280px] flex-col items-center justify-center text-center text-white/40">
+                  <Dumbbell size={42} className="mb-3 text-brand-300/60" />
+                  <p className="font-semibold text-white/70">Nenhum treino para hoje</p>
+                  <p className="mt-1 text-sm">Aguarde o personal ou aproveite para recuperar.</p>
+                </div>
               )}
             </div>
+          </div>
+        </section>
 
-            {/* Payment Status */}
-            <div className="card">
-              <h3 className="font-bold text-white text-sm mb-3 flex items-center gap-2">
-                <CreditCard size={16} className="text-brand-300" /> Mensalidade
-              </h3>
-              {latestPayment ? (
-                <div>
-                  <div className={`flex items-center gap-2 p-3 rounded-lg border ${
-                    paymentStatus === 'pago' ? 'bg-emerald-500/10 border-emerald-500/20' :
-                    paymentStatus === 'vencido' ? 'bg-red-500/10 border-red-500/20' :
-                    'bg-amber-500/10 border-amber-500/20'
-                  }`}>
-                    {paymentStatus === 'pago' ? <CheckCircle2 size={16} className="text-emerald-400" /> :
-                     <AlertTriangle size={16} className={paymentStatus === 'vencido' ? 'text-red-400' : 'text-amber-400'} />}
-                    <div>
-                      <p className="text-white text-sm font-semibold">
-                        {paymentStatus === 'pago' ? 'Em dia' : paymentStatus === 'vencido' ? 'Vencida!' : 'Pendente'}
-                      </p>
-                      <p className="text-white/40 text-xs">
-                        Venc.: {format(new Date(latestPayment.dueDate), 'dd/MM/yyyy')}
-                      </p>
-                    </div>
+        <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {[
+            { label: 'IMC atual', value: student?.imc || '--', icon: Scale, accent: 'text-emerald-400', note: student?.imcCategory || 'Sem dados' },
+            { label: 'Peso base', value: student?.questionnaire?.weight ? `${student.questionnaire.weight}kg` : '--', icon: TrendingUp, accent: 'text-brand-300', note: 'questionario demo' },
+            { label: 'Dieta ativa', value: activeDiet ? activeDiet.meals?.length || 0 : 0, icon: Apple, accent: 'text-emerald-400', note: activeDiet ? activeDiet.title : 'Sem dieta' },
+            { label: 'Mensalidade', value: latestPayment ? `R$ ${latestPayment.amount?.toFixed(2)}` : '--', icon: CreditCard, accent: 'text-amber-400', note: latestPayment?.status || 'Sem cobranca' },
+          ].map((item) => (
+            <div key={item.label} className="card-sm rounded-[1.5rem] p-4">
+              <div className={`flex h-10 w-10 items-center justify-center rounded-2xl bg-white/5 ${item.accent}`}>
+                <item.icon size={18} />
+              </div>
+              <p className="mt-4 text-xs uppercase tracking-[0.18em] text-white/30">{item.label}</p>
+              <p className="mt-2 text-2xl font-black text-white">{item.value}</p>
+              <p className="mt-1 text-xs text-white/45">{item.note}</p>
+            </div>
+          ))}
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+          <div className="space-y-6">
+            <div className="card rounded-[1.75rem]">
+              <div className="flex items-center justify-between">
+                <h3 className="flex items-center gap-2 font-bold text-white">
+                  <Bell size={16} className="text-brand-300" /> Alertas e lembretes
+                </h3>
+                <span className="text-xs text-white/35">{notifications.length} ativos</span>
+              </div>
+              <div className="mt-4 grid gap-3">
+                {notifications.map((item) => (
+                  <div key={item.id} className={`rounded-3xl border p-4 ${toneClasses[item.tone] || toneClasses.brand}`}>
+                    <p className="font-semibold">{item.title}</p>
+                    <p className="mt-1 text-sm opacity-90">{item.message}</p>
                   </div>
-                  <p className="text-white/30 text-xs mt-2 text-center">R$ {latestPayment.amount?.toFixed(2)}/mês</p>
+                ))}
+              </div>
+            </div>
+
+            <div className="card rounded-[1.75rem]">
+              <div className="flex items-center justify-between">
+                <h3 className="flex items-center gap-2 font-bold text-white">
+                  <Dumbbell size={16} className="text-brand-300" /> Proximos exercicios
+                </h3>
+                <button type="button" onClick={() => todayWorkout && navigate(`/student/workout/${todayWorkout._id}`)} className="text-xs text-brand-300 transition-colors hover:text-brand-200">
+                  Abrir sessao
+                </button>
+              </div>
+              {todayWorkout?.exercises?.length ? (
+                <div className="mt-4 space-y-3">
+                  {todayWorkout.exercises.slice(0, 3).map((exercise, index) => (
+                    <div key={`${exercise.exerciseId || exercise.name}-${index}`} className="grid gap-3 rounded-3xl border border-white/10 bg-white/5 p-3 sm:grid-cols-[120px_1fr]">
+                      <ExerciseAnimation exercise={exercise} size="sm" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-white">{exercise.name}</p>
+                        <p className="mt-1 text-xs text-white/45">{exercise.sets} series • {exercise.reps}</p>
+                        <p className="mt-2 text-xs text-white/35">{exercise.instructions}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : (
-                <p className="text-white/30 text-xs">Nenhum dado de mensalidade.</p>
+                <p className="mt-4 text-sm text-white/40">Sem exercicios programados para o dia.</p>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="card rounded-[1.75rem]">
+              <h3 className="flex items-center gap-2 font-bold text-white">
+                <Award size={16} className="text-brand-300" /> Minha estrutura demo
+              </h3>
+              <div className="mt-4 space-y-3">
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-white/30">Personal responsavel</p>
+                  <p className="mt-2 text-lg font-bold text-white">{selectedTeacher?.name || 'Sem personal'}</p>
+                  <p className="mt-1 text-sm text-white/45">{selectedTeacher?.email || 'Selecione um profissional'}</p>
+                </div>
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-white/30">Plano alimentar</p>
+                  <p className="mt-2 text-lg font-bold text-white">{activeDiet?.title || 'Sem dieta ativa'}</p>
+                  <p className="mt-1 text-sm text-white/45">{activeDiet?.goal || 'Aguardando configuracao do personal'}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <button type="button" onClick={() => navigate('/student/diets')} className="btn-secondary">
+                    <Apple size={15} />
+                    Dietas
+                  </button>
+                  <button type="button" onClick={() => navigate('/student/trainer')} className="btn-secondary">
+                    <Award size={15} />
+                    Personal
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="card rounded-[1.75rem]">
+              <h3 className="flex items-center gap-2 font-bold text-white">
+                <Scale size={16} className="text-brand-300" /> Composicao corporal
+              </h3>
+              {student?.imc ? (
+                <div className="mt-4">
+                  <IMCGauge imc={student.imc} category={student.imcCategory} />
+                  <div className="mt-4 grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm">
+                      <p className="text-white/35">Altura</p>
+                      <p className="mt-1 font-bold text-white">{student.questionnaire?.height} cm</p>
+                    </div>
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm">
+                      <p className="text-white/35">Hidratacao</p>
+                      <p className="mt-1 font-bold text-white">{activeDiet?.hydrationLiters || 2.5} L</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-4 text-sm text-white/40">Complete o questionario para visualizar esse bloco.</p>
               )}
             </div>
 
-            {/* Reminders */}
-            <div className="card">
-              <h3 className="font-bold text-white text-sm mb-3 flex items-center gap-2">
-                <Bell size={16} className="text-brand-300" /> Lembretes
-              </h3>
-              <div className="space-y-2">
-                {reminders.map((r, i) => (
-                  <div key={i} className={`flex items-center gap-2 p-2.5 rounded-lg border text-xs ${r.bg}`}>
-                    <r.icon size={13} className={r.color} />
-                    <span className="text-white/70">{r.text}</span>
+            <div className="card rounded-[1.75rem]">
+              <div className="flex items-center justify-between">
+                <h3 className="flex items-center gap-2 font-bold text-white">
+                  <Flame size={16} className="text-brand-300" /> Ultimas sessoes
+                </h3>
+                <button type="button" onClick={() => navigate('/student/evolution')} className="text-xs text-brand-300 transition-colors hover:text-brand-200">
+                  Evolucao
+                </button>
+              </div>
+              <div className="mt-4 space-y-3">
+                {sessions.slice(0, 4).map((session) => (
+                  <div key={session._id} className="flex items-center gap-3 rounded-3xl border border-white/10 bg-white/5 p-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-500/15 text-brand-300">
+                      <Dumbbell size={16} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-white">{session.workoutName}</p>
+                      <p className="text-xs text-white/40">{format(new Date(session.date), 'dd/MM/yyyy')}</p>
+                    </div>
+                    <div className="text-right text-xs">
+                      <p className="text-white/55">{session.totalDuration || 0} min</p>
+                      <span className={session.completed ? 'badge-success' : 'badge-warning'}>
+                        {session.completed ? 'Concluido' : 'Em aberto'}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Recent sessions */}
-        {sessions.length > 0 && (
-          <div className="card">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-white flex items-center gap-2">
-                <Award size={18} className="text-brand-300" /> Últimos Treinos
-              </h3>
-              <button onClick={() => navigate('/student/evolution')} className="text-brand-400 text-xs flex items-center gap-1 hover:text-brand-300 transition-colors">
-                Ver evolução <ChevronRight size={14} />
-              </button>
+        <section className="grid gap-4 sm:grid-cols-3">
+          {[
+            {
+              icon: Droplets,
+              title: 'Agua',
+              text: `Meta do dia: ${activeDiet?.hydrationLiters || 2.5} litros`,
+              accent: 'text-sky-300',
+            },
+            {
+              icon: Apple,
+              title: 'Alimentacao',
+              text: activeDiet?.meals?.[0]?.title ? `Proxima refeicao: ${activeDiet.meals[0].title}` : 'Sem refeicao planejada',
+              accent: 'text-emerald-300',
+            },
+            {
+              icon: CheckCircle2,
+              title: 'Frequencia',
+              text: currentWeekSessions.length >= 3 ? 'Boa constancia nesta semana' : 'Ha espaco para treinar mais nesta semana',
+              accent: 'text-brand-300',
+            },
+          ].map((item) => (
+            <div key={item.title} className="card-sm rounded-[1.5rem] p-4">
+              <div className={`flex h-10 w-10 items-center justify-center rounded-2xl bg-white/5 ${item.accent}`}>
+                <item.icon size={18} />
+              </div>
+              <p className="mt-4 text-sm font-semibold text-white">{item.title}</p>
+              <p className="mt-1 text-sm text-white/45">{item.text}</p>
             </div>
-            <div className="space-y-2">
-              {sessions.slice(0, 4).map((s) => (
-                <div key={s._id} className="flex items-center gap-4 p-3 rounded-xl bg-white/3 border border-white/5">
-                  <div className="w-9 h-9 rounded-lg bg-brand-500/20 flex items-center justify-center">
-                    <Dumbbell size={16} className="text-brand-300" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white text-sm font-medium truncate">{s.workoutName || 'Treino'}</p>
-                    <p className="text-white/40 text-xs">{format(new Date(s.date), 'dd/MM/yyyy')}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-white/60 text-xs">{s.totalDuration || 0} min</p>
-                    <span className={s.completed ? 'badge-success' : 'badge-warning'}>
-                      {s.completed ? 'Concluído' : 'Incompleto'}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+          ))}
+        </section>
       </div>
     </Layout>
   )

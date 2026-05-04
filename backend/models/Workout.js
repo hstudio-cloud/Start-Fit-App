@@ -2,15 +2,19 @@ const mongoose = require('mongoose');
 
 const exerciseSchema = new mongoose.Schema({
   exerciseId: { type: String, default: '' },
+  id: { type: String, default: '' },
   name: { type: String, required: true },
   muscleGroup: { type: String, required: true },
   equipment: { type: String, default: 'nenhum' },
   sets: { type: Number, required: true },
   reps: { type: String, required: true },
+  restSeconds: { type: Number, default: 60 },
   restTime: { type: Number, default: 60 }, // seconds
   duration: { type: Number, default: 0 }, // seconds (for cardio)
   difficulty: { type: String, enum: ['iniciante', 'intermediario', 'avancado'], default: 'iniciante' },
   instructions: { type: String, default: '' },
+  commonMistakes: { type: [String], default: [] },
+  tips: { type: [String], default: [] },
   animationKey: { type: String, default: 'generic' },
   videoUrl: { type: String, default: '' },
   order: { type: Number, default: 0 },

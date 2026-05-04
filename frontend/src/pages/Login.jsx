@@ -162,6 +162,7 @@ export default function Login() {
                 ['Admin', 'admin@startfit.com'],
                 ['Professor', 'professor@startfit.com'],
                 ['Aluno', 'joao@email.com'],
+                ['Aluna', 'maria@email.com'],
               ].map(([role, email]) => (
                 <button key={role} onClick={() => { setForm({ ...form, email, password: '123456' }); setMode('login') }}
                   className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-white/40 hover:text-white/70 hover:bg-white/5 transition-all flex justify-between">

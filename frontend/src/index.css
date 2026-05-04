@@ -373,3 +373,350 @@
   0%, 100% { transform: rotate(0deg); }
   50% { transform: rotate(25deg); }
 }
+
+.exercise-copy-snippet {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.exercise-animation-shell {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  background:
+    radial-gradient(circle at top, rgba(0,180,216,0.18), transparent 38%),
+    linear-gradient(180deg, rgba(13,31,45,0.96), rgba(7,11,16,0.96));
+}
+
+.exercise-animation-shell.sm { min-height: 10rem; }
+.exercise-animation-shell.md { min-height: 13rem; }
+.exercise-animation-shell.lg { min-height: 19rem; }
+.exercise-animation-shell.highlighted {
+  box-shadow: inset 0 0 0 1px rgba(0,180,216,0.2), 0 20px 45px rgba(0,150,199,0.14);
+}
+
+.exercise-animation-stage {
+  position: relative;
+  min-height: inherit;
+  padding: 1rem 1rem 2.4rem;
+}
+
+.exercise-animation-shell .exercise-figure {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 8.5rem;
+}
+
+.exercise-head,
+.exercise-body,
+.exercise-limb,
+.exercise-prop,
+.exercise-floor {
+  position: absolute;
+  display: block;
+}
+
+.exercise-head {
+  top: 12%;
+  left: 50%;
+  width: 2.6rem;
+  height: 2.6rem;
+  margin-left: -1.3rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #caf0f8, #90e0ef);
+}
+
+.exercise-body {
+  top: 30%;
+  left: 50%;
+  width: 0.75rem;
+  height: 28%;
+  margin-left: -0.375rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffffff, #48cae4);
+}
+
+.exercise-limb {
+  width: 0.7rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffffff, #00b4d8);
+  transform-origin: top center;
+}
+
+.exercise-limb.arm {
+  top: 31%;
+  height: 24%;
+}
+
+.exercise-limb.arm.left { left: calc(50% - 2.1rem); transform: rotate(35deg); }
+.exercise-limb.arm.right { left: calc(50% + 1.4rem); transform: rotate(-35deg); }
+
+.exercise-limb.leg {
+  top: 55%;
+  height: 29%;
+}
+
+.exercise-limb.leg.left { left: calc(50% - 1.4rem); transform: rotate(12deg); }
+.exercise-limb.leg.right { left: calc(50% + 0.7rem); transform: rotate(-12deg); }
+
+.exercise-prop.bar {
+  top: 37%;
+  left: 50%;
+  width: 6.5rem;
+  height: 0.5rem;
+  margin-left: -3.25rem;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #0077b6, #00b4d8, #0077b6);
+  opacity: 0.78;
+}
+
+.exercise-prop.bench {
+  left: 50%;
+  bottom: 18%;
+  width: 6rem;
+  height: 0.55rem;
+  margin-left: -3rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.14);
+  opacity: 0;
+}
+
+.exercise-prop.cable {
+  top: 8%;
+  left: 50%;
+  width: 0.18rem;
+  height: 32%;
+  margin-left: -0.09rem;
+  border-radius: 999px;
+  background: rgba(202,240,248,0.6);
+  opacity: 0;
+}
+
+.exercise-prop.pedal {
+  bottom: 26%;
+  width: 1rem;
+  height: 0.3rem;
+  border-radius: 999px;
+  background: #90e0ef;
+  opacity: 0;
+}
+
+.exercise-prop.pedal.left { left: calc(50% - 1.8rem); }
+.exercise-prop.pedal.right { left: calc(50% + 0.8rem); }
+
+.exercise-floor {
+  left: 14%;
+  right: 14%;
+  bottom: 10%;
+  height: 0.28rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.12);
+}
+
+.exercise-animation-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding: 0.85rem 1rem;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: rgba(255,255,255,0.56);
+}
+
+.exercise-animation-caption small {
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  color: rgba(144,224,239,0.75);
+}
+
+.exercise-animation-shell[data-family='bench'] .exercise-prop.bench,
+.exercise-animation-shell[data-family='incline-bench'] .exercise-prop.bench,
+.exercise-animation-shell[data-family='fly'] .exercise-prop.bench,
+.exercise-animation-shell[data-family='skull-crusher'] .exercise-prop.bench,
+.exercise-animation-shell[data-family='dip'] .exercise-prop.bench {
+  opacity: 1;
+}
+
+.exercise-animation-shell[data-family='lat-pulldown'] .exercise-prop.cable,
+.exercise-animation-shell[data-family='pushdown'] .exercise-prop.cable {
+  opacity: 1;
+}
+
+.exercise-animation-shell[data-family='bike'] .exercise-prop.pedal,
+.exercise-animation-shell[data-family='elliptical'] .exercise-prop.pedal {
+  opacity: 1;
+}
+
+.exercise-animation-shell[data-family='bench'] .exercise-limb.arm.left,
+.exercise-animation-shell[data-family='incline-bench'] .exercise-limb.arm.left,
+.exercise-animation-shell[data-family='shoulder-press'] .exercise-limb.arm.left { animation: exercisePressLeft 1.6s ease-in-out infinite; }
+
+.exercise-animation-shell[data-family='bench'] .exercise-limb.arm.right,
+.exercise-animation-shell[data-family='incline-bench'] .exercise-limb.arm.right,
+.exercise-animation-shell[data-family='shoulder-press'] .exercise-limb.arm.right { animation: exercisePressRight 1.6s ease-in-out infinite; }
+
+.exercise-animation-shell[data-family='bench'] .exercise-prop.bar,
+.exercise-animation-shell[data-family='incline-bench'] .exercise-prop.bar,
+.exercise-animation-shell[data-family='shoulder-press'] .exercise-prop.bar { animation: exerciseBarFloat 1.6s ease-in-out infinite; }
+
+.exercise-animation-shell[data-family='fly'] .exercise-limb.arm.left { animation: exerciseFlyLeft 1.7s ease-in-out infinite; }
+.exercise-animation-shell[data-family='fly'] .exercise-limb.arm.right { animation: exerciseFlyRight 1.7s ease-in-out infinite; }
+
+.exercise-animation-shell[data-family='push-up'] .exercise-head,
+.exercise-animation-shell[data-family='plank'] .exercise-head,
+.exercise-animation-shell[data-family='crunch'] .exercise-head,
+.exercise-animation-shell[data-family='leg-raise'] .exercise-head {
+  top: 40%;
+  left: 32%;
+  width: 2rem;
+  height: 2rem;
+}
+
+.exercise-animation-shell[data-family='push-up'] .exercise-body,
+.exercise-animation-shell[data-family='plank'] .exercise-body,
+.exercise-animation-shell[data-family='crunch'] .exercise-body,
+.exercise-animation-shell[data-family='leg-raise'] .exercise-body {
+  top: 50%;
+  left: 38%;
+  width: 6rem;
+  height: 0.7rem;
+  margin-left: 0;
+  transform-origin: left center;
+}
+
+.exercise-animation-shell[data-family='push-up'] .exercise-limb.arm.left,
+.exercise-animation-shell[data-family='push-up'] .exercise-limb.arm.right,
+.exercise-animation-shell[data-family='push-up'] .exercise-limb.leg.left,
+.exercise-animation-shell[data-family='push-up'] .exercise-limb.leg.right,
+.exercise-animation-shell[data-family='plank'] .exercise-limb.arm.left,
+.exercise-animation-shell[data-family='plank'] .exercise-limb.arm.right,
+.exercise-animation-shell[data-family='plank'] .exercise-limb.leg.left,
+.exercise-animation-shell[data-family='plank'] .exercise-limb.leg.right,
+.exercise-animation-shell[data-family='crunch'] .exercise-limb.arm.left,
+.exercise-animation-shell[data-family='crunch'] .exercise-limb.arm.right,
+.exercise-animation-shell[data-family='crunch'] .exercise-limb.leg.left,
+.exercise-animation-shell[data-family='crunch'] .exercise-limb.leg.right,
+.exercise-animation-shell[data-family='leg-raise'] .exercise-limb.arm.left,
+.exercise-animation-shell[data-family='leg-raise'] .exercise-limb.arm.right {
+  opacity: 0;
+}
+
+.exercise-animation-shell[data-family='push-up'] .exercise-body { animation: exercisePushUp 1.5s ease-in-out infinite; }
+.exercise-animation-shell[data-family='plank'] .exercise-body { animation: exercisePlank 1.8s ease-in-out infinite; }
+.exercise-animation-shell[data-family='crunch'] .exercise-body { animation: exerciseCrunch 1.4s ease-in-out infinite; }
+
+.exercise-animation-shell[data-family='leg-raise'] .exercise-limb.leg.left,
+.exercise-animation-shell[data-family='leg-raise'] .exercise-limb.leg.right {
+  top: 46%;
+  height: 2.9rem;
+  opacity: 1;
+}
+.exercise-animation-shell[data-family='leg-raise'] .exercise-limb.leg.left { left: 59%; animation: exerciseLegRaiseLeft 1.4s ease-in-out infinite; }
+.exercise-animation-shell[data-family='leg-raise'] .exercise-limb.leg.right { left: 63%; animation: exerciseLegRaiseRight 1.4s ease-in-out infinite; }
+
+.exercise-animation-shell[data-family='lat-pulldown'] .exercise-limb.arm.left,
+.exercise-animation-shell[data-family='row'] .exercise-limb.arm.left,
+.exercise-animation-shell[data-family='bent-row'] .exercise-limb.arm.left,
+.exercise-animation-shell[data-family='pull-up'] .exercise-limb.arm.left { animation: exercisePullLeft 1.5s ease-in-out infinite; }
+.exercise-animation-shell[data-family='lat-pulldown'] .exercise-limb.arm.right,
+.exercise-animation-shell[data-family='row'] .exercise-limb.arm.right,
+.exercise-animation-shell[data-family='bent-row'] .exercise-limb.arm.right,
+.exercise-animation-shell[data-family='pull-up'] .exercise-limb.arm.right { animation: exercisePullRight 1.5s ease-in-out infinite; }
+.exercise-animation-shell[data-family='bent-row'] .exercise-body { animation: exerciseBentRowBody 1.5s ease-in-out infinite; }
+
+.exercise-animation-shell[data-family='squat'] .exercise-body,
+.exercise-animation-shell[data-family='lunge'] .exercise-body,
+.exercise-animation-shell[data-family='leg-press'] .exercise-body,
+.exercise-animation-shell[data-family='leg-extension'] .exercise-body,
+.exercise-animation-shell[data-family='leg-curl'] .exercise-body { animation: exerciseSquatBody 1.8s ease-in-out infinite; }
+.exercise-animation-shell[data-family='squat'] .exercise-limb.leg.left,
+.exercise-animation-shell[data-family='lunge'] .exercise-limb.leg.left,
+.exercise-animation-shell[data-family='leg-press'] .exercise-limb.leg.left,
+.exercise-animation-shell[data-family='leg-extension'] .exercise-limb.leg.left,
+.exercise-animation-shell[data-family='leg-curl'] .exercise-limb.leg.left { animation: exerciseSquatLegLeft 1.8s ease-in-out infinite; }
+.exercise-animation-shell[data-family='squat'] .exercise-limb.leg.right,
+.exercise-animation-shell[data-family='lunge'] .exercise-limb.leg.right,
+.exercise-animation-shell[data-family='leg-press'] .exercise-limb.leg.right,
+.exercise-animation-shell[data-family='leg-extension'] .exercise-limb.leg.right,
+.exercise-animation-shell[data-family='leg-curl'] .exercise-limb.leg.right { animation: exerciseSquatLegRight 1.8s ease-in-out infinite; }
+
+.exercise-animation-shell[data-family='curl'] .exercise-limb.arm.left,
+.exercise-animation-shell[data-family='alternating-curl'] .exercise-limb.arm.left,
+.exercise-animation-shell[data-family='hammer-curl'] .exercise-limb.arm.left { animation: exerciseCurlLeft 1.3s ease-in-out infinite; }
+.exercise-animation-shell[data-family='curl'] .exercise-limb.arm.right,
+.exercise-animation-shell[data-family='hammer-curl'] .exercise-limb.arm.right { animation: exerciseCurlRight 1.3s ease-in-out infinite; }
+.exercise-animation-shell[data-family='alternating-curl'] .exercise-limb.arm.right { animation: exerciseAltCurlRight 1.3s ease-in-out infinite; }
+
+.exercise-animation-shell[data-family='pushdown'] .exercise-limb.arm.left,
+.exercise-animation-shell[data-family='skull-crusher'] .exercise-limb.arm.left,
+.exercise-animation-shell[data-family='dip'] .exercise-limb.arm.left { animation: exerciseTricepsLeft 1.3s ease-in-out infinite; }
+.exercise-animation-shell[data-family='pushdown'] .exercise-limb.arm.right,
+.exercise-animation-shell[data-family='skull-crusher'] .exercise-limb.arm.right,
+.exercise-animation-shell[data-family='dip'] .exercise-limb.arm.right { animation: exerciseTricepsRight 1.3s ease-in-out infinite; }
+
+.exercise-animation-shell[data-family='lateral-raise'] .exercise-limb.arm.left { animation: exerciseLateralLeft 1.4s ease-in-out infinite; }
+.exercise-animation-shell[data-family='lateral-raise'] .exercise-limb.arm.right { animation: exerciseLateralRight 1.4s ease-in-out infinite; }
+.exercise-animation-shell[data-family='front-raise'] .exercise-limb.arm.left { animation: exerciseFrontLeft 1.4s ease-in-out infinite; }
+.exercise-animation-shell[data-family='front-raise'] .exercise-limb.arm.right { animation: exerciseFrontRight 1.4s ease-in-out infinite; }
+
+.exercise-animation-shell[data-family='calf'] .exercise-body { animation: exerciseCalfBody 1.2s ease-in-out infinite; }
+.exercise-animation-shell[data-family='calf'] .exercise-limb.leg.left { animation: exerciseCalfLeft 1.2s ease-in-out infinite; }
+.exercise-animation-shell[data-family='calf'] .exercise-limb.leg.right { animation: exerciseCalfRight 1.2s ease-in-out infinite; }
+
+.exercise-animation-shell[data-family='treadmill'] .exercise-limb.arm.left,
+.exercise-animation-shell[data-family='bike'] .exercise-limb.arm.left,
+.exercise-animation-shell[data-family='elliptical'] .exercise-limb.arm.left { animation: exerciseRunArmLeft 1.1s linear infinite; }
+.exercise-animation-shell[data-family='treadmill'] .exercise-limb.arm.right,
+.exercise-animation-shell[data-family='bike'] .exercise-limb.arm.right,
+.exercise-animation-shell[data-family='elliptical'] .exercise-limb.arm.right { animation: exerciseRunArmRight 1.1s linear infinite; }
+.exercise-animation-shell[data-family='treadmill'] .exercise-limb.leg.left,
+.exercise-animation-shell[data-family='bike'] .exercise-limb.leg.left,
+.exercise-animation-shell[data-family='elliptical'] .exercise-limb.leg.left { animation: exerciseRunLegLeft 1.1s linear infinite; }
+.exercise-animation-shell[data-family='treadmill'] .exercise-limb.leg.right,
+.exercise-animation-shell[data-family='bike'] .exercise-limb.leg.right,
+.exercise-animation-shell[data-family='elliptical'] .exercise-limb.leg.right { animation: exerciseRunLegRight 1.1s linear infinite; }
+.exercise-animation-shell[data-family='bike'] .exercise-prop.pedal.left,
+.exercise-animation-shell[data-family='elliptical'] .exercise-prop.pedal.left { animation: exercisePedalLeft 1.1s linear infinite; }
+.exercise-animation-shell[data-family='bike'] .exercise-prop.pedal.right,
+.exercise-animation-shell[data-family='elliptical'] .exercise-prop.pedal.right { animation: exercisePedalRight 1.1s linear infinite; }
+
+@keyframes exercisePressLeft { 0%,100% { transform: rotate(35deg); } 50% { transform: translateY(-1rem) rotate(-10deg); } }
+@keyframes exercisePressRight { 0%,100% { transform: rotate(-35deg); } 50% { transform: translateY(-1rem) rotate(10deg); } }
+@keyframes exerciseBarFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-1.1rem); } }
+@keyframes exerciseFlyLeft { 0%,100% { transform: rotate(48deg); } 50% { transform: rotate(8deg); } }
+@keyframes exerciseFlyRight { 0%,100% { transform: rotate(-48deg); } 50% { transform: rotate(-8deg); } }
+@keyframes exercisePushUp { 0%,100% { transform: rotate(0deg) translateY(0); } 50% { transform: rotate(-3deg) translateY(0.8rem); } }
+@keyframes exercisePlank { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(1deg); } }
+@keyframes exerciseCrunch { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(-18deg); } }
+@keyframes exerciseLegRaiseLeft { 0%,100% { transform: rotate(10deg); } 50% { transform: rotate(-48deg); } }
+@keyframes exerciseLegRaiseRight { 0%,100% { transform: rotate(-10deg); } 50% { transform: rotate(-68deg); } }
+@keyframes exercisePullLeft { 0%,100% { transform: rotate(35deg); } 50% { transform: rotate(78deg) translateX(0.35rem); } }
+@keyframes exercisePullRight { 0%,100% { transform: rotate(-35deg); } 50% { transform: rotate(-78deg) translateX(-0.35rem); } }
+@keyframes exerciseBentRowBody { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(10deg); } }
+@keyframes exerciseSquatBody { 0%,100% { transform: translateY(0); } 50% { transform: translateY(1rem); } }
+@keyframes exerciseSquatLegLeft { 0%,100% { transform: rotate(12deg); } 50% { transform: rotate(35deg); } }
+@keyframes exerciseSquatLegRight { 0%,100% { transform: rotate(-12deg); } 50% { transform: rotate(-35deg); } }
+@keyframes exerciseCurlLeft { 0%,100% { transform: rotate(35deg); } 50% { transform: rotate(85deg); } }
+@keyframes exerciseCurlRight { 0%,100% { transform: rotate(-35deg); } 50% { transform: rotate(-85deg); } }
+@keyframes exerciseAltCurlRight { 0%,100% { transform: rotate(-18deg); } 50% { transform: rotate(-82deg); } }
+@keyframes exerciseTricepsLeft { 0%,100% { transform: rotate(12deg); } 50% { transform: rotate(55deg); } }
+@keyframes exerciseTricepsRight { 0%,100% { transform: rotate(-12deg); } 50% { transform: rotate(-55deg); } }
+@keyframes exerciseLateralLeft { 0%,100% { transform: rotate(35deg); } 50% { transform: rotate(82deg); } }
+@keyframes exerciseLateralRight { 0%,100% { transform: rotate(-35deg); } 50% { transform: rotate(-82deg); } }
+@keyframes exerciseFrontLeft { 0%,100% { transform: rotate(18deg); } 50% { transform: rotate(78deg); } }
+@keyframes exerciseFrontRight { 0%,100% { transform: rotate(-18deg); } 50% { transform: rotate(-78deg); } }
+@keyframes exerciseCalfBody { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-0.55rem); } }
+@keyframes exerciseCalfLeft { 0%,100% { transform: rotate(12deg); } 50% { transform: rotate(2deg); } }
+@keyframes exerciseCalfRight { 0%,100% { transform: rotate(-12deg); } 50% { transform: rotate(-2deg); } }
+@keyframes exerciseRunArmLeft { 0%,100% { transform: rotate(25deg); } 50% { transform: rotate(65deg); } }
+@keyframes exerciseRunArmRight { 0%,100% { transform: rotate(-25deg); } 50% { transform: rotate(-65deg); } }
+@keyframes exerciseRunLegLeft { 0%,100% { transform: rotate(15deg); } 50% { transform: rotate(42deg); } }
+@keyframes exerciseRunLegRight { 0%,100% { transform: rotate(-15deg); } 50% { transform: rotate(-42deg); } }
+@keyframes exercisePedalLeft { 0%,100% { transform: translateY(0); } 50% { transform: translateY(0.7rem); } }
+@keyframes exercisePedalRight { 0%,100% { transform: translateY(0.7rem); } 50% { transform: translateY(0); } }

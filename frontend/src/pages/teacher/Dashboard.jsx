@@ -1,161 +1,265 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { format } from 'date-fns'
+import {
+  Activity, AlertCircle, ArrowRight, Award, Bell, CalendarDays, Dumbbell, Target, TrendingUp, Users,
+} from 'lucide-react'
+import toast from 'react-hot-toast'
 import { useNavigate } from 'react-router-dom'
 import Layout from '../../components/Layout'
 import api from '../../services/api'
-import {
-  Users, TrendingUp, Activity, ChevronRight,
-  Dumbbell, Clock, Award, AlertCircle,
-} from 'lucide-react'
-import { format } from 'date-fns'
-import toast from 'react-hot-toast'
+import { buildTeacherNotifications } from '../../data/demoNotifications'
 
 export default function TeacherDashboard() {
   const navigate = useNavigate()
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => { fetchStudents() }, [])
+  useEffect(() => {
+    fetchStudents()
+  }, [])
 
-  const fetchStudents = async () => {
+  async function fetchStudents() {
     try {
       const res = await api.get('/teacher/students')
       setStudents(res.data.students || [])
-    } catch { toast.error('Erro ao carregar alunos.') }
-    finally { setLoading(false) }
+    } catch {
+      toast.error('Erro ao carregar alunos.')
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const activeStudents = students.filter(s => {
-    if (!s.lastWorkout) return false
-    return (Date.now() - new Date(s.lastWorkout)) < 7 * 24 * 60 * 60 * 1000
+  const activeStudents = students.filter((student) => {
+    if (!student.lastWorkout) return false
+    return Date.now() - new Date(student.lastWorkout).getTime() <= 7 * 24 * 60 * 60 * 1000
   })
 
-  const inactiveStudents = students.filter(s => {
-    if (!s.lastWorkout) return true
-    return (Date.now() - new Date(s.lastWorkout)) > 14 * 24 * 60 * 60 * 1000
+  const inactiveStudents = students.filter((student) => {
+    if (!student.lastWorkout) return true
+    return Date.now() - new Date(student.lastWorkout).getTime() > 14 * 24 * 60 * 60 * 1000
   })
+
+  const notifications = buildTeacherNotifications({ students })
+
+  const spotlightStudent = useMemo(() => {
+    if (!students.length) return null
+    return [...students].sort((a, b) => (b.totalWorkouts || 0) - (a.totalWorkouts || 0))[0]
+  }, [students])
+
+  if (loading) {
+    return (
+      <Layout title="Dashboard Professor">
+        <div className="flex h-64 items-center justify-center">
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
+        </div>
+      </Layout>
+    )
+  }
 
   return (
     <Layout title="Dashboard Professor">
-      <div className="max-w-4xl mx-auto space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold text-white">Meu Painel 👨‍🏫</h2>
-          <p className="text-white/40 text-sm">{format(new Date(), "dd 'de' MMMM 'de' yyyy")}</p>
-        </div>
+      <div className="mx-auto max-w-6xl space-y-6">
+        <section className="overflow-hidden rounded-[2rem] border border-brand-400/20 bg-[radial-gradient(circle_at_top_left,_rgba(0,180,216,0.20),_transparent_28%),linear-gradient(135deg,_rgba(7,11,16,0.98),_rgba(13,31,45,0.98))] p-5 shadow-[0_30px_80px_rgba(0,0,0,0.28)] sm:p-7">
+          <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-brand-400/20 bg-brand-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-brand-300">
+                <Award size={13} />
+                Painel do professor
+              </div>
+              <h2 className="mt-4 text-3xl font-black tracking-tight text-white sm:text-4xl">Sua carteira de alunos</h2>
+              <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/65">
+                Um painel mais forte para apresentacao comercial: status de frequencia, alunos em risco, alunos em destaque e atalhos para acompanhar treinos, dieta e feedbacks.
+              </p>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-4">
-          {[
-            { label: 'Meus Alunos', value: students.length, icon: Users, color: 'brand' },
-            { label: 'Ativos (7d)', value: activeStudents.length, icon: Activity, color: 'emerald' },
-            { label: 'Parados (+14d)', value: inactiveStudents.length, icon: AlertCircle, color: 'amber' },
-          ].map(s => (
-            <div key={s.label} className="stat-card">
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                s.color === 'brand' ? 'bg-brand-500/20 text-brand-300' :
-                s.color === 'emerald' ? 'bg-emerald-500/20 text-emerald-400' :
-                'bg-amber-500/20 text-amber-400'
-              }`}><s.icon size={16} /></div>
-              <p className="text-2xl font-black text-white">{s.value}</p>
-              <p className="text-white/40 text-xs">{s.label}</p>
+              <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-white/30">Alunos</p>
+                  <p className="mt-2 text-3xl font-black text-white">{students.length}</p>
+                  <p className="mt-1 text-xs text-white/45">vinculados a voce</p>
+                </div>
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-white/30">Ativos</p>
+                  <p className="mt-2 text-3xl font-black text-white">{activeStudents.length}</p>
+                  <p className="mt-1 text-xs text-white/45">nos ultimos 7 dias</p>
+                </div>
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-white/30">Em risco</p>
+                  <p className="mt-2 text-3xl font-black text-white">{inactiveStudents.length}</p>
+                  <p className="mt-1 text-xs text-white/45">mais de 14 dias</p>
+                </div>
+              </div>
             </div>
-          ))}
-        </div>
 
-        {/* Inactive Alert */}
-        {inactiveStudents.length > 0 && (
-          <div className="card border-amber-500/30 bg-amber-500/5">
-            <div className="flex items-center gap-3 mb-3">
-              <AlertCircle size={18} className="text-amber-400" />
-              <h3 className="font-bold text-amber-400">Alunos que precisam de atenção</h3>
-            </div>
-            <div className="space-y-2">
-              {inactiveStudents.slice(0, 3).map(s => {
-                const daysSince = s.lastWorkout
-                  ? Math.floor((Date.now() - new Date(s.lastWorkout)) / 86400000)
-                  : null
-                return (
-                  <div key={s._id} className="flex items-center gap-3 p-3 rounded-lg bg-white/3 border border-amber-500/10">
-                    <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-xs font-bold text-amber-400">
-                      {s.user?.name?.charAt(0)}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-white text-sm font-medium">{s.user?.name}</p>
-                      <p className="text-amber-400/70 text-xs">
-                        {daysSince ? `${daysSince} dias sem treinar` : 'Nunca treinou'}
+            <div className="rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-4 backdrop-blur-sm">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.22em] text-white/30">Aluno em destaque</p>
+                  <h3 className="mt-2 text-2xl font-black text-white">{spotlightStudent?.user?.name || 'Sem dados'}</h3>
+                  <p className="mt-1 text-sm text-white/50">
+                    {spotlightStudent?.questionnaire?.objective?.replace('_', ' ') || 'Sem objetivo'}
+                  </p>
+                </div>
+                <button type="button" onClick={() => navigate('/teacher/students')} className="btn-secondary px-4 py-2 text-sm">
+                  Abrir alunos
+                </button>
+              </div>
+
+              {spotlightStudent ? (
+                <div className="mt-4 space-y-3">
+                  <div className="rounded-3xl border border-white/10 bg-dark-900/35 p-4">
+                    <p className="text-sm text-white/45">Treinos concluidos</p>
+                    <p className="mt-1 text-3xl font-black text-white">{spotlightStudent.totalWorkouts || 0}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl border border-white/10 bg-dark-900/35 p-3">
+                      <p className="text-xs text-white/35">Ultimo treino</p>
+                      <p className="mt-1 text-sm font-semibold text-white">
+                        {spotlightStudent.lastWorkout ? format(new Date(spotlightStudent.lastWorkout), 'dd/MM/yyyy') : 'Sem registro'}
                       </p>
                     </div>
-                    <button onClick={() => navigate('/teacher/students')}
-                      className="text-amber-400 hover:text-amber-300 transition-colors">
-                      <ChevronRight size={16} />
-                    </button>
+                    <div className="rounded-2xl border border-white/10 bg-dark-900/35 p-3">
+                      <p className="text-xs text-white/35">Nivel</p>
+                      <p className="mt-1 text-sm font-semibold capitalize text-white">{spotlightStudent.questionnaire?.level || 'iniciante'}</p>
+                    </div>
                   </div>
-                )
-              })}
+                  <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-sm text-emerald-200">
+                    {spotlightStudent.notes?.[0]?.text || 'Aluno com boa aderencia na demonstracao.'}
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-4 text-sm text-white/45">Nenhum aluno disponivel.</p>
+              )}
             </div>
           </div>
-        )}
+        </section>
 
-        {/* Students list */}
-        <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-white flex items-center gap-2">
-              <Users size={16} className="text-brand-300" /> Meus Alunos
-            </h3>
-            <button onClick={() => navigate('/teacher/students')}
-              className="text-brand-400 text-xs flex items-center gap-1 hover:text-brand-300 transition-colors">
-              Ver todos <ChevronRight size={14} />
-            </button>
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {[
+            { label: 'Carteira ativa', value: activeStudents.length, icon: Activity, accent: 'text-emerald-400', note: 'engajados nesta semana' },
+            { label: 'Baixa frequencia', value: inactiveStudents.length, icon: AlertCircle, accent: 'text-amber-400', note: 'pedem contato rapido' },
+            { label: 'Treinos acompanhados', value: students.reduce((acc, item) => acc + (item.totalWorkouts || 0), 0), icon: Dumbbell, accent: 'text-brand-300', note: 'historico demo somado' },
+            { label: 'Agenda do dia', value: students.length ? students.length : 0, icon: CalendarDays, accent: 'text-sky-300', note: 'alunos para follow-up' },
+          ].map((item) => (
+            <div key={item.label} className="card-sm rounded-[1.5rem] p-4">
+              <div className={`flex h-10 w-10 items-center justify-center rounded-2xl bg-white/5 ${item.accent}`}>
+                <item.icon size={18} />
+              </div>
+              <p className="mt-4 text-xs uppercase tracking-[0.18em] text-white/30">{item.label}</p>
+              <p className="mt-2 text-2xl font-black text-white">{item.value}</p>
+              <p className="mt-1 text-xs text-white/45">{item.note}</p>
+            </div>
+          ))}
+        </section>
+
+        <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+          <div className="space-y-6">
+            <div className="card rounded-[1.75rem]">
+              <div className="flex items-center justify-between">
+                <h3 className="flex items-center gap-2 font-bold text-white">
+                  <Bell size={16} className="text-brand-300" /> Lembretes do professor
+                </h3>
+              </div>
+              <div className="mt-4 space-y-3">
+                {notifications.map((item) => (
+                  <div key={item.id} className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                    <p className="font-semibold text-white">{item.title}</p>
+                    <p className="mt-1 text-sm text-white/50">{item.message}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="card rounded-[1.75rem]">
+              <h3 className="flex items-center gap-2 font-bold text-white">
+                <Target size={16} className="text-brand-300" /> Alunos que precisam de atencao
+              </h3>
+              {inactiveStudents.length ? (
+                <div className="mt-4 space-y-3">
+                  {inactiveStudents.slice(0, 4).map((student) => {
+                    const daysInactive = student.lastWorkout
+                      ? Math.floor((Date.now() - new Date(student.lastWorkout).getTime()) / 86400000)
+                      : null
+                    return (
+                      <div key={student._id} className="rounded-3xl border border-amber-400/20 bg-amber-500/10 p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-semibold text-white">{student.user?.name}</p>
+                            <p className="mt-1 text-sm text-amber-200/80">
+                              {daysInactive === null ? 'Sem treino registrado' : `${daysInactive} dias sem treinar`}
+                            </p>
+                          </div>
+                          <button type="button" onClick={() => navigate('/teacher/students')} className="text-amber-300 transition-colors hover:text-amber-200">
+                            <ArrowRight size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <p className="mt-4 text-sm text-white/45">Nenhum aluno em estado de risco no momento.</p>
+              )}
+            </div>
           </div>
 
-          {loading ? (
-            <div className="flex justify-center py-8">
-              <div className="w-7 h-7 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+          <div className="card rounded-[1.75rem]">
+            <div className="flex items-center justify-between">
+              <h3 className="flex items-center gap-2 font-bold text-white">
+                <Users size={16} className="text-brand-300" /> Visao geral dos alunos
+              </h3>
+              <button type="button" onClick={() => navigate('/teacher/students')} className="text-xs text-brand-300 transition-colors hover:text-brand-200">
+                Gerenciar tudo
+              </button>
             </div>
-          ) : students.length === 0 ? (
-            <div className="text-center py-10 text-white/30">
-              <Users size={32} className="mx-auto mb-3 opacity-30" />
-              <p className="text-sm">Nenhum aluno vinculado a você ainda.</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {students.slice(0, 6).map(s => {
-                const daysSince = s.lastWorkout ? Math.floor((Date.now() - new Date(s.lastWorkout)) / 86400000) : null
-                const isInactive = !s.lastWorkout || daysSince > 14
+
+            <div className="mt-4 space-y-3">
+              {students.slice(0, 6).map((student) => {
+                const daysSince = student.lastWorkout
+                  ? Math.floor((Date.now() - new Date(student.lastWorkout).getTime()) / 86400000)
+                  : null
+                const statusClass = !student.lastWorkout || daysSince > 14
+                  ? 'badge-warning'
+                  : daysSince <= 2
+                    ? 'badge-success'
+                    : 'badge-info'
 
                 return (
-                  <div key={s._id}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-white/3 border border-white/5 hover:border-white/10 transition-colors cursor-pointer"
-                    onClick={() => navigate('/teacher/students')}>
-                    <div className="w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center text-sm font-bold text-brand-300 flex-shrink-0">
-                      {s.user?.name?.charAt(0)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white font-medium text-sm">{s.user?.name}</p>
-                      <div className="flex items-center gap-3 mt-0.5">
-                        <span className="flex items-center gap-1 text-white/40 text-xs">
-                          <Dumbbell size={10} /> {s.totalWorkouts || 0} treinos
-                        </span>
-                        {s.questionnaire?.objective && (
-                          <span className="text-white/30 text-xs capitalize">{s.questionnaire.objective.replace('_', ' ')}</span>
-                        )}
+                  <div key={student._id} className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-white">{student.user?.name}</p>
+                        <p className="mt-1 truncate text-xs text-white/40">{student.user?.email}</p>
                       </div>
+                      <span className={statusClass}>
+                        {daysSince === null ? 'Sem treino' : daysSince <= 2 ? 'Em dia' : daysSince > 14 ? 'Risco' : 'Acompanhar'}
+                      </span>
                     </div>
-                    <div className="text-right flex-shrink-0">
-                      {daysSince !== null ? (
-                        <span className={`text-xs font-medium ${isInactive ? 'text-amber-400' : 'text-emerald-400'}`}>
-                          {daysSince === 0 ? 'Hoje' : `${daysSince}d`}
-                        </span>
-                      ) : (
-                        <span className="text-white/30 text-xs">Nunca</span>
-                      )}
-                      <p className="text-white/20 text-xs">último treino</p>
+
+                    <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                      <div className="rounded-2xl border border-white/10 bg-dark-900/35 p-3">
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-white/30">Objetivo</p>
+                        <p className="mt-1 text-sm font-semibold capitalize text-white">{student.questionnaire?.objective?.replace('_', ' ') || 'Nao definido'}</p>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-dark-900/35 p-3">
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-white/30">Treinos</p>
+                        <p className="mt-1 text-sm font-semibold text-white">{student.totalWorkouts || 0}</p>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-dark-900/35 p-3">
+                        <p className="text-[11px] uppercase tracking-[0.18em] text-white/30">Ultimo treino</p>
+                        <p className="mt-1 text-sm font-semibold text-white">{daysSince === null ? 'Nunca' : `${daysSince}d`}</p>
+                      </div>
                     </div>
                   </div>
                 )
               })}
             </div>
-          )}
-        </div>
+
+            <button type="button" onClick={() => navigate('/teacher/students')} className="btn-primary mt-5 w-full">
+              <TrendingUp size={16} />
+              Abrir painel detalhado de alunos
+            </button>
+          </div>
+        </section>
       </div>
     </Layout>
   )

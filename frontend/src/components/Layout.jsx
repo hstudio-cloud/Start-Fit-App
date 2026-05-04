@@ -1,9 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import {
-  Apple, ChevronRight, CreditCard, LayoutDashboard, LogOut, Menu, TrendingUp, UserCheck, Users,
+  Apple, Bell, ChevronRight, CreditCard, LayoutDashboard, LogOut, Menu, TrendingUp, UserCheck, Users,
 } from 'lucide-react'
+import api from '../services/api'
+import { buildAdminNotifications, buildStudentNotifications, buildTeacherNotifications } from '../data/demoNotifications'
+import PwaInstallButton from './PwaInstallButton'
 
 const menuByRole = {
   student: [
@@ -25,10 +28,12 @@ const menuByRole = {
 }
 
 export default function Layout({ children, title }) {
-  const { user, logout } = useAuth()
+  const { user, logout, student } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [notificationOpen, setNotificationOpen] = useState(false)
+  const [notifications, setNotifications] = useState([])
 
   const menu = menuByRole[user?.role] || []
   const roleLabel = { admin: 'Administrador', teacher: 'Professor', student: 'Aluno' }
@@ -54,6 +59,48 @@ export default function Layout({ children, title }) {
     logout()
     navigate('/login')
   }
+
+  useEffect(() => {
+    if (!user) return
+
+    async function loadNotifications() {
+      try {
+        if (user.role === 'student') {
+          const [paymentsRes, workoutRes, dietsRes] = await Promise.all([
+            api.get('/student/payments'),
+            api.get('/student/workout/today'),
+            api.get('/student/diets'),
+          ])
+          setNotifications(buildStudentNotifications({
+            payments: paymentsRes.data.payments || [],
+            workout: workoutRes.data.workout,
+            student,
+            diets: dietsRes.data.diets || [],
+          }))
+          return
+        }
+
+        if (user.role === 'admin') {
+          const [studentsRes, paymentsRes] = await Promise.all([
+            api.get('/admin/students'),
+            api.get('/admin/payments'),
+          ])
+          setNotifications(buildAdminNotifications({
+            students: studentsRes.data.students || [],
+            payments: paymentsRes.data.payments || [],
+          }))
+          return
+        }
+
+        const studentsRes = await api.get('/teacher/students')
+        setNotifications(buildTeacherNotifications({ students: studentsRes.data.students || [] }))
+      } catch {
+        setNotifications([])
+      }
+    }
+
+    loadNotifications()
+  }, [user, student, location.pathname])
 
   return (
     <div className="min-h-screen flex">
@@ -137,6 +184,42 @@ export default function Layout({ children, title }) {
             {title ? <h2 className="text-lg font-semibold text-white">{title}</h2> : null}
           </div>
           <div className="flex items-center gap-3">
+            <PwaInstallButton />
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setNotificationOpen((current) => !current)}
+                className="relative rounded-2xl border border-white/10 bg-white/5 p-2 text-white/60 transition-colors hover:text-white"
+              >
+                <Bell size={18} />
+                {notifications.length ? (
+                  <span className="absolute -right-1 -top-1 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-brand-400 px-1 text-[10px] font-bold text-dark-900">
+                    {notifications.length}
+                  </span>
+                ) : null}
+              </button>
+
+              {notificationOpen ? (
+                <div className="absolute right-0 mt-3 w-[320px] rounded-3xl border border-white/10 bg-dark-800 p-3 shadow-2xl">
+                  <div className="mb-2 flex items-center justify-between">
+                    <p className="text-sm font-semibold text-white">Central demo</p>
+                    <span className="text-xs text-white/35">{notifications.length} alertas</span>
+                  </div>
+                  <div className="max-h-[320px] space-y-2 overflow-y-auto pr-1">
+                    {notifications.length ? notifications.map((notification) => (
+                      <div key={notification.id} className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                        <p className="text-sm font-semibold text-white">{notification.title}</p>
+                        <p className="mt-1 text-xs leading-relaxed text-white/50">{notification.message}</p>
+                      </div>
+                    )) : (
+                      <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-white/45">
+                        Nenhuma notificacao demo no momento.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : null}
+            </div>
             <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
             <span className="hidden text-xs text-white/40 sm:block">Online</span>
           </div>

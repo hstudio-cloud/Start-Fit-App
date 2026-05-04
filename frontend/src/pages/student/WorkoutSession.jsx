@@ -1,45 +1,26 @@
-import { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import {
+  CheckCircle2, ChevronLeft, Clock3, Pause, Play, Save, Sparkles, TimerReset, Trophy,
+} from 'lucide-react'
+import toast from 'react-hot-toast'
 import Layout from '../../components/Layout'
 import Timer from '../../components/Timer'
 import ExerciseVisualizer from '../../components/ExerciseVisualizer'
 import api from '../../services/api'
-import {
-  ChevronLeft, Play, Pause, CheckCircle2, Clock, Dumbbell,
-  RotateCcw, Save, Star, ChevronDown, ChevronUp, Timer as TimerIcon,
-  Flame, Target, Info
-} from 'lucide-react'
-import toast from 'react-hot-toast'
+import { buildExercisePresentation } from '../../data/exerciseAnimations'
 
-const WorkoutTimer = ({ onTick }) => {
-  const [elapsed, setElapsed] = useState(0)
-  const [running, setRunning] = useState(true)
-  const ref = useRef(null)
+function formatClock(totalSeconds) {
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+}
 
-  useEffect(() => {
-    ref.current = setInterval(() => {
-      setElapsed(e => { onTick?.(e + 1); return e + 1 })
-    }, 1000)
-    return () => clearInterval(ref.current)
-  }, [])
-
-  const fmt = s => `${String(Math.floor(s / 3600)).padStart(2,'0')}:${String(Math.floor((s % 3600) / 60)).padStart(2,'0')}:${String(s % 60).padStart(2,'0')}`
-
-  const toggle = () => {
-    if (running) clearInterval(ref.current)
-    else ref.current = setInterval(() => setElapsed(e => e + 1), 1000)
-    setRunning(r => !r)
-  }
-
-  return (
-    <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-dark-700 border border-white/10">
-      <Clock size={15} className="text-brand-300" />
-      <span className="text-white font-mono text-sm font-bold">{fmt(elapsed)}</span>
-      <button onClick={toggle} className="text-white/40 hover:text-white/70 transition-colors ml-1">
-        {running ? <Pause size={14} /> : <Play size={14} />}
-      </button>
-    </div>
-  )
+function formatShort(totalSeconds) {
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 }
 
 export default function WorkoutSession() {
@@ -48,268 +29,478 @@ export default function WorkoutSession() {
   const [workout, setWorkout] = useState(null)
   const [session, setSession] = useState(null)
   const [exercises, setExercises] = useState([])
-  const [expanded, setExpanded] = useState(0)
-  const [showTimer, setShowTimer] = useState(null)
-  const [rating, setRating] = useState(0)
   const [notes, setNotes] = useState('')
-  const [finishing, setFinishing] = useState(false)
+  const [feeling, setFeeling] = useState(4)
   const [saving, setSaving] = useState(false)
-  const [showFinish, setShowFinish] = useState(false)
-  const totalTime = useRef(0)
+  const [finishing, setFinishing] = useState(false)
+  const [exerciseStartedAt, setExerciseStartedAt] = useState(null)
+  const [exerciseElapsed, setExerciseElapsed] = useState(0)
+  const [sessionRunning, setSessionRunning] = useState(true)
+  const [showRestTimer, setShowRestTimer] = useState(false)
+  const [showSummary, setShowSummary] = useState(false)
+  const totalElapsedRef = useRef(0)
 
-  useEffect(() => { fetchWorkout() }, [id])
+  useEffect(() => {
+    fetchWorkout()
+  }, [id])
 
-  const fetchWorkout = async () => {
+  useEffect(() => {
+    if (!exerciseStartedAt) return undefined
+    const timerId = window.setInterval(() => {
+      setExerciseElapsed(Math.floor((Date.now() - exerciseStartedAt) / 1000))
+    }, 1000)
+    return () => window.clearInterval(timerId)
+  }, [exerciseStartedAt])
+
+  useEffect(() => {
+    if (!sessionRunning) return undefined
+    const timerId = window.setInterval(() => {
+      totalElapsedRef.current += 1
+    }, 1000)
+    return () => window.clearInterval(timerId)
+  }, [sessionRunning])
+
+  async function fetchWorkout() {
     try {
       const res = await api.get('/student/workouts')
-      const found = res.data.workouts?.find(w => w._id === id)
-      if (!found) { toast.error('Treino não encontrado'); navigate('/student'); return }
-      setWorkout(found)
+      const found = res.data.workouts?.find((item) => item._id === id)
+      if (!found) {
+        toast.error('Treino nao encontrado.')
+        navigate('/student')
+        return
+      }
 
-      const exList = found.exercises.map(ex => ({
-        exerciseId: ex.exerciseId,
-        animationKey: ex.animationKey,
-        mediaKind: ex.mediaKind,
-        videoUrl: ex.videoUrl,
-        videoSourceUrl: ex.videoSourceUrl,
-        videoAttribution: ex.videoAttribution,
-        videoLabel: ex.videoLabel,
-        exerciseName: ex.name, muscleGroup: ex.muscleGroup,
-        plannedSets: ex.sets, plannedReps: ex.reps,
-        completedSets: 0, load: '', reps: ex.reps,
-        observations: '', completed: false, duration: 0,
-        restTime: ex.restTime, instructions: ex.instructions,
-      }))
-      setExercises(exList)
-
-      const sessRes = await api.post('/student/session', {
-        workoutId: found._id, workoutName: found.name,
-        exercises: exList.map(e => ({ ...e, load: 0 })),
+      const preparedExercises = (found.exercises || []).map((exercise) => {
+        const item = buildExercisePresentation(exercise)
+        return {
+          ...item,
+          exerciseName: item.name,
+          plannedSets: Number(item.sets || 3),
+          plannedReps: item.reps || '8-12',
+          completedSets: 0,
+          currentSet: 1,
+          actualReps: item.reps || '8-12',
+          load: '',
+          completed: false,
+          started: false,
+          seriesLog: [],
+          observations: '',
+        }
       })
-      setSession(sessRes.data.session)
-    } catch (err) {
+
+      setWorkout(found)
+      setExercises(preparedExercises)
+
+      const sessionResponse = await api.post('/student/session', {
+        workoutId: found._id,
+        workoutName: found.name,
+        exercises: preparedExercises,
+      })
+      setSession(sessionResponse.data.session)
+    } catch (error) {
       toast.error('Erro ao carregar treino.')
     }
   }
 
-  const updateEx = (i, field, value) => {
-    setExercises(prev => prev.map((ex, idx) => idx === i ? { ...ex, [field]: value } : ex))
+  const activeIndex = exercises.findIndex((exercise) => !exercise.completed)
+  const currentExercise = activeIndex >= 0 ? exercises[activeIndex] : null
+  const completedExercises = exercises.filter((exercise) => exercise.completed).length
+  const progress = exercises.length ? Math.round((completedExercises / exercises.length) * 100) : 0
+  const totalSeries = exercises.reduce((acc, exercise) => acc + Number(exercise.plannedSets || 0), 0)
+  const completedSeries = exercises.reduce((acc, exercise) => acc + Number(exercise.completedSets || 0), 0)
+  const estimatedVolume = exercises.reduce((acc, exercise) => {
+    return acc + exercise.seriesLog.reduce((seriesAcc, setEntry) => (
+      seriesAcc + (Number(setEntry.load) || 0) * (Number.parseInt(setEntry.reps, 10) || 0)
+    ), 0)
+  }, 0)
+
+  const summary = useMemo(() => ({
+    totalTime: totalElapsedRef.current,
+    completedExercises,
+    volume: estimatedVolume,
+  }), [completedExercises, estimatedVolume, showSummary])
+
+  function updateExercise(index, patch) {
+    setExercises((current) => current.map((exercise, exerciseIndex) => (
+      exerciseIndex === index ? { ...exercise, ...patch } : exercise
+    )))
   }
 
-  const toggleComplete = (i) => {
-    const ex = exercises[i]
-    if (!ex.completed && !ex.load) {
-      toast('Informe a carga utilizada!', { icon: '⚖️' })
-    }
-    updateEx(i, 'completed', !ex.completed)
-    if (!ex.completed) {
-      setShowTimer(i)
-      setTimeout(() => setExpanded(i + 1 < exercises.length ? i + 1 : i), 300)
-    }
+  function startCurrentExercise() {
+    if (activeIndex < 0) return
+    updateExercise(activeIndex, { started: true })
+    setExerciseStartedAt(Date.now())
+    setExerciseElapsed(0)
+    toast.success('Exercicio iniciado.')
   }
 
-  const saveProgress = async () => {
+  function toggleSessionRunning() {
+    setSessionRunning((current) => !current)
+  }
+
+  function registerSet() {
+    if (activeIndex < 0) return
+    const exercise = exercises[activeIndex]
+    if (!exercise.load && exercise.muscleGroup !== 'cardio') {
+      toast.error('Informe a carga antes de concluir a serie.')
+      return
+    }
+
+    const setEntry = {
+      setNumber: exercise.currentSet,
+      load: Number(exercise.load) || 0,
+      reps: exercise.actualReps || exercise.plannedReps,
+      completedAt: new Date().toISOString(),
+    }
+
+    const nextCompletedSets = exercise.completedSets + 1
+    const finishedExercise = nextCompletedSets >= exercise.plannedSets
+
+    updateExercise(activeIndex, {
+      completedSets: nextCompletedSets,
+      currentSet: finishedExercise ? exercise.currentSet : exercise.currentSet + 1,
+      completed: finishedExercise,
+      seriesLog: [...exercise.seriesLog, setEntry],
+    })
+
+    setExerciseStartedAt(null)
+    setExerciseElapsed(0)
+
+    if (finishedExercise) {
+      toast.success('Exercicio concluido.')
+      setShowRestTimer(false)
+      if (completedExercises + 1 >= exercises.length) {
+        setShowSummary(true)
+      }
+      return
+    }
+
+    setShowRestTimer(true)
+    toast.success('Serie concluida. Hora do descanso.')
+  }
+
+  async function saveProgress() {
     if (!session) return
     setSaving(true)
     try {
       await api.put(`/student/session/${session._id}`, {
-        exercises: exercises.map(e => ({ ...e, load: Number(e.load) || 0 })),
+        exercises,
         generalNotes: notes,
+        feeling,
       })
-      toast.success('Progresso salvo!')
-    } catch { toast.error('Erro ao salvar.') }
-    finally { setSaving(false) }
+      toast.success('Progresso salvo.')
+    } catch {
+      toast.error('Erro ao salvar progresso.')
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const finishWorkout = async () => {
+  async function finishWorkout() {
     if (!session) return
     setFinishing(true)
     try {
       await api.put(`/student/session/${session._id}`, {
-        exercises: exercises.map(e => ({ ...e, load: Number(e.load) || 0 })),
-        generalNotes: notes, rating, completed: true,
+        exercises,
+        generalNotes: `${notes}\nSensacao do treino: ${feeling}/5`,
+        rating: feeling,
+        completed: true,
       })
-      toast.success('Treino concluído! 🎉')
+      toast.success('Treino concluido.')
       navigate('/student')
-    } catch { toast.error('Erro ao finalizar treino.') }
-    finally { setFinishing(false) }
+    } catch {
+      toast.error('Erro ao finalizar treino.')
+    } finally {
+      setFinishing(false)
+    }
   }
 
-  const completedCount = exercises.filter(e => e.completed).length
-  const progress = exercises.length > 0 ? (completedCount / exercises.length) * 100 : 0
-
-  if (!workout) return (
-    <Layout title="Treino">
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    </Layout>
-  )
+  if (!workout) {
+    return (
+      <Layout title="Treino">
+        <div className="flex h-64 items-center justify-center">
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" />
+        </div>
+      </Layout>
+    )
+  }
 
   return (
     <Layout title={workout.name}>
-      <div className="max-w-2xl mx-auto space-y-5">
-        {/* Header bar */}
+      <div className="mx-auto max-w-6xl space-y-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <button onClick={() => navigate('/student')} className="flex items-center gap-1 text-white/40 hover:text-white transition-colors text-sm">
-            <ChevronLeft size={16} /> Voltar
+          <button type="button" onClick={() => navigate('/student')} className="inline-flex items-center gap-2 text-sm text-white/45 transition-colors hover:text-white">
+            <ChevronLeft size={16} />
+            Voltar
           </button>
-          <div className="flex items-center gap-2 sm:ml-auto">
-            <WorkoutTimer onTick={t => { totalTime.current = t }} />
-            <button onClick={saveProgress} disabled={saving}
-              className="btn-secondary text-sm py-2 px-3">
-              <Save size={14} />
+
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white">
+              Sessao: <span className="font-mono text-brand-300">{formatClock(totalElapsedRef.current)}</span>
+            </div>
+            <button type="button" onClick={toggleSessionRunning} className="btn-secondary px-4 py-2 text-sm">
+              {sessionRunning ? <Pause size={15} /> : <Play size={15} />}
+              {sessionRunning ? 'Pausar sessao' : 'Retomar sessao'}
+            </button>
+            <button type="button" onClick={saveProgress} disabled={saving} className="btn-secondary px-4 py-2 text-sm">
+              <Save size={15} />
               {saving ? 'Salvando...' : 'Salvar'}
             </button>
           </div>
         </div>
 
-        {/* Progress */}
-        <div className="card">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h2 className="text-lg font-bold text-white">{workout.name}</h2>
-              <p className="text-white/40 text-sm">{workout.objective}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-2xl font-black text-brand-300">{completedCount}<span className="text-white/30 text-lg">/{exercises.length}</span></p>
-              <p className="text-white/40 text-xs">exercícios</p>
-            </div>
-          </div>
-          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-brand-500 to-brand-300 rounded-full transition-all duration-500"
-              style={{ width: `${progress}%` }} />
-          </div>
-          <div className="flex items-center gap-4 mt-3 text-xs text-white/40">
-            <span className="flex items-center gap-1"><Flame size={12} className="text-amber-400" /> {completedCount} concluídos</span>
-            <span className="flex items-center gap-1"><Target size={12} className="text-brand-400" /> {exercises.length - completedCount} restantes</span>
-            <span className="flex items-center gap-1"><Clock size={12} className="text-emerald-400" /> ~{workout.estimatedDuration} min</span>
-          </div>
-        </div>
-
-        {/* Exercise List */}
-        <div className="space-y-3">
-          {exercises.map((ex, i) => (
-            <div key={i} className={`card p-0 overflow-hidden transition-all duration-300 ${
-              ex.completed ? 'border-emerald-500/30' : expanded === i ? 'border-brand-500/30' : 'border-white/5'
-            }`}>
-              {/* Exercise header */}
-              <button className="w-full flex items-center gap-3 p-4 text-left"
-                onClick={() => setExpanded(expanded === i ? -1 : i)}>
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 font-bold text-sm transition-all ${
-                  ex.completed ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-dark-600 text-brand-400 border border-white/10'
-                }`}>
-                  {ex.completed ? <CheckCircle2 size={18} /> : i + 1}
+        <div className="grid gap-5 xl:grid-cols-[1.3fr_0.7fr]">
+          <div className="space-y-5">
+            <div className="card overflow-hidden">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.26em] text-white/30">Exercicio atual</p>
+                  <h2 className="mt-2 text-2xl font-black text-white">
+                    {currentExercise ? currentExercise.exerciseName : 'Treino concluido'}
+                  </h2>
+                  <p className="mt-2 text-sm text-white/45">
+                    {currentExercise
+                      ? `${currentExercise.completedSets}/${currentExercise.plannedSets} series concluidas • ${currentExercise.plannedReps}`
+                      : 'Voce concluiu todos os exercicios desta sessao.'}
+                  </p>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className={`font-semibold text-sm ${ex.completed ? 'text-white/50 line-through' : 'text-white'}`}>{ex.exerciseName}</p>
-                  <div className="flex items-center gap-3 mt-0.5">
-                    <span className="text-white/40 text-xs">{ex.plannedSets}x {ex.plannedReps}</span>
-                    <span className="text-white/30 text-xs capitalize">{ex.muscleGroup}</span>
+
+                <div className="grid grid-cols-3 gap-3 text-center text-sm">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                    <p className="text-white/35">Progresso</p>
+                    <p className="mt-1 font-bold text-white">{progress}%</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                    <p className="text-white/35">Series</p>
+                    <p className="mt-1 font-bold text-white">{completedSeries}/{totalSeries}</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                    <p className="text-white/35">Timer</p>
+                    <p className="mt-1 font-bold text-white">{formatShort(exerciseElapsed)}</p>
                   </div>
                 </div>
-                {expanded === i ? <ChevronUp size={16} className="text-white/40 flex-shrink-0" /> : <ChevronDown size={16} className="text-white/40 flex-shrink-0" />}
-              </button>
+              </div>
 
-              {/* Expanded details */}
-              {expanded === i && (
-                <div className="px-4 pb-4 border-t border-white/5 pt-4 space-y-4">
-                  <ExerciseVisualizer exercise={ex} />
+              <div className="mt-5 h-3 overflow-hidden rounded-full bg-white/10">
+                <div className="h-full rounded-full bg-gradient-to-r from-brand-500 via-brand-300 to-emerald-400 transition-all" style={{ width: `${progress}%` }} />
+              </div>
+            </div>
 
-                  {ex.instructions && (
-                    <div className="flex gap-2 p-3 rounded-lg bg-brand-500/10 border border-brand-500/20">
-                      <Info size={14} className="text-brand-300 flex-shrink-0 mt-0.5" />
-                      <p className="text-white/60 text-xs leading-relaxed">{ex.instructions}</p>
-                    </div>
-                  )}
+            {currentExercise ? (
+              <div className="card">
+                <ExerciseVisualizer exercise={currentExercise} active />
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="label text-xs">Carga (kg)</label>
-                      <input className="input py-2 text-sm" type="number" min="0" placeholder="0"
-                        value={ex.load} onChange={e => updateEx(i, 'load', e.target.value)} />
-                    </div>
-                    <div>
-                      <label className="label text-xs">Repetições</label>
-                      <input className="input py-2 text-sm" type="text" placeholder={ex.plannedReps}
-                        value={ex.reps} onChange={e => updateEx(i, 'reps', e.target.value)} />
-                    </div>
-                  </div>
-
+                <div className="mt-5 grid gap-3 sm:grid-cols-3">
                   <div>
-                    <label className="label text-xs">Observações</label>
-                    <textarea className="input text-sm resize-none py-2" rows={2}
-                      placeholder="Ex: Aumentar peso na próxima, sentiu dor..."
-                      value={ex.observations} onChange={e => updateEx(i, 'observations', e.target.value)} />
+                    <label className="label">Carga (kg)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      className="input"
+                      value={currentExercise.load}
+                      onChange={(event) => updateExercise(activeIndex, { load: event.target.value })}
+                      placeholder="Ex: 20"
+                    />
                   </div>
-
-                  {/* Rest timer */}
-                  {showTimer === i && (
-                    <div className="rounded-xl bg-dark-700 border border-brand-500/20 p-2">
-                      <p className="text-center text-xs text-brand-300 mb-2 font-semibold flex items-center justify-center gap-1">
-                        <TimerIcon size={12} /> Tempo de Descanso
-                      </p>
-                      <Timer defaultSeconds={ex.restTime || 60} onComplete={() => toast('Descansou! Próximo exercício 💪', { icon: '⏰' })} />
-                    </div>
-                  )}
-
-                  <div className="flex gap-2">
-                    <button onClick={() => setShowTimer(showTimer === i ? null : i)}
-                      className="btn-secondary text-xs py-2 px-3 flex-1">
-                      <TimerIcon size={14} />
-                      {showTimer === i ? 'Fechar Timer' : 'Timer Descanso'}
-                    </button>
-                    <button onClick={() => toggleComplete(i)}
-                      className={`text-xs py-2 px-3 flex-1 flex items-center gap-1 justify-center rounded-xl font-semibold transition-all ${
-                        ex.completed
-                          ? 'bg-white/10 border border-white/20 text-white/60 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/30'
-                          : 'bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/30'
-                      }`}>
-                      <CheckCircle2 size={14} />
-                      {ex.completed ? 'Desfazer' : 'Concluir'}
-                    </button>
+                  <div>
+                    <label className="label">Repeticoes feitas</label>
+                    <input
+                      type="text"
+                      className="input"
+                      value={currentExercise.actualReps}
+                      onChange={(event) => updateExercise(activeIndex, { actualReps: event.target.value })}
+                      placeholder={currentExercise.plannedReps}
+                    />
+                  </div>
+                  <div>
+                    <label className="label">Observacoes</label>
+                    <input
+                      type="text"
+                      className="input"
+                      value={currentExercise.observations}
+                      onChange={(event) => updateExercise(activeIndex, { observations: event.target.value })}
+                      placeholder="Tecnica, dor, facilidade..."
+                    />
                   </div>
                 </div>
-              )}
-            </div>
-          ))}
-        </div>
 
-        {/* Notes */}
-        <div className="card">
-          <label className="label">Observações gerais do treino</label>
-          <textarea className="input resize-none" rows={3}
-            placeholder="Como foi o treino? Algum exercício que ficou difícil?"
-            value={notes} onChange={e => setNotes(e.target.value)} />
-        </div>
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                  <button type="button" onClick={startCurrentExercise} className="btn-primary flex-1">
+                    <Play size={16} />
+                    Iniciar exercicio
+                  </button>
+                  <button type="button" onClick={registerSet} className="btn-secondary flex-1">
+                    <CheckCircle2 size={16} />
+                    Concluir serie {currentExercise.currentSet}/{currentExercise.plannedSets}
+                  </button>
+                </div>
 
-        {/* Finish */}
-        {!showFinish ? (
-          <button onClick={() => setShowFinish(true)} className="btn-primary w-full">
-            <CheckCircle2 size={18} /> Finalizar Treino
-          </button>
-        ) : (
-          <div className="card border-emerald-500/30">
-            <h3 className="font-bold text-white mb-4 text-center">Avalie seu treino</h3>
-            <div className="flex justify-center gap-2 mb-4">
-              {[1, 2, 3, 4, 5].map(n => (
-                <button key={n} onClick={() => setRating(n)}
-                  className={`w-12 h-12 rounded-xl text-2xl transition-all hover:scale-110 ${rating >= n ? 'bg-amber-500/20 border border-amber-500/40' : 'bg-white/5 border border-white/10'}`}>
-                  <Star size={22} className={`mx-auto ${rating >= n ? 'text-amber-400 fill-amber-400' : 'text-white/30'}`} />
-                </button>
-              ))}
-            </div>
-            <div className="flex gap-3">
-              <button onClick={() => setShowFinish(false)} className="btn-secondary flex-1">
-                <RotateCcw size={16} /> Continuar
-              </button>
-              <button onClick={finishWorkout} disabled={finishing} className="btn-primary flex-1" style={{ background: 'linear-gradient(135deg, #059669, #10b981)' }}>
-                <CheckCircle2 size={16} />
-                {finishing ? 'Salvando...' : 'Confirmar'}
-              </button>
+                {showRestTimer ? (
+                  <div className="mt-5 rounded-3xl border border-brand-400/20 bg-brand-500/10">
+                    <div className="border-b border-brand-400/15 px-4 py-3">
+                      <p className="text-sm font-semibold text-brand-300">Cronometro de descanso</p>
+                    </div>
+                    <Timer defaultSeconds={currentExercise.restSeconds || 60} onComplete={() => setShowRestTimer(false)} />
+                  </div>
+                ) : null}
+
+                {currentExercise.seriesLog.length ? (
+                  <div className="mt-5 rounded-3xl border border-white/10 bg-white/5 p-4">
+                    <div className="mb-3 flex items-center gap-2 text-white">
+                      <Sparkles size={15} className="text-brand-300" />
+                      <p className="font-semibold">Historico do exercicio</p>
+                    </div>
+                    <div className="space-y-2 text-sm text-white/65">
+                      {currentExercise.seriesLog.map((entry) => (
+                        <div key={`${entry.setNumber}-${entry.completedAt}`} className="flex items-center justify-between rounded-2xl border border-white/10 px-3 py-2">
+                          <span>Serie {entry.setNumber}</span>
+                          <span>{entry.load} kg • {entry.reps}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
+            <div className="card">
+              <div className="mb-4 flex items-center gap-2 text-white">
+                <Clock3 size={16} className="text-brand-300" />
+                <h3 className="font-bold">Fila do treino</h3>
+              </div>
+              <div className="space-y-3">
+                {exercises.map((exercise, index) => (
+                  <div
+                    key={`${exercise.exerciseId}-${index}`}
+                    className={`rounded-3xl border p-4 transition-all ${
+                      index === activeIndex
+                        ? 'border-brand-400/30 bg-brand-500/10'
+                        : exercise.completed
+                          ? 'border-emerald-400/25 bg-emerald-500/10'
+                          : 'border-white/10 bg-white/5'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-white">{exercise.exerciseName}</p>
+                        <p className="text-xs text-white/40">{exercise.plannedSets} series • {exercise.plannedReps}</p>
+                      </div>
+                      <span className={exercise.completed ? 'badge-success' : index === activeIndex ? 'badge-info' : 'badge-gray'}>
+                        {exercise.completed ? 'Concluido' : index === activeIndex ? 'Atual' : 'Pendente'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        )}
+
+          <div className="space-y-5">
+            <div className="card">
+              <div className="mb-3 flex items-center gap-2 text-white">
+                <TimerReset size={16} className="text-brand-300" />
+                <h3 className="font-bold">Resumo ao vivo</h3>
+              </div>
+              <div className="space-y-3 text-sm">
+                <div className="flex items-center justify-between text-white/55">
+                  <span>Exercicios concluidos</span>
+                  <strong className="text-white">{completedExercises}/{exercises.length}</strong>
+                </div>
+                <div className="flex items-center justify-between text-white/55">
+                  <span>Volume estimado</span>
+                  <strong className="text-white">{estimatedVolume} kg</strong>
+                </div>
+                <div className="flex items-center justify-between text-white/55">
+                  <span>Duracao planejada</span>
+                  <strong className="text-white">{workout.estimatedDuration} min</strong>
+                </div>
+              </div>
+            </div>
+
+            <div className="card">
+              <h3 className="font-bold text-white">Observacoes do treino</h3>
+              <textarea
+                rows={5}
+                className="input mt-4 resize-none"
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+                placeholder="Registre percepcao de esforco, dores, evolucao tecnica ou ajustes para a proxima sessao."
+              />
+            </div>
+
+            <div className="card">
+              <h3 className="font-bold text-white">Sensacao do treino</h3>
+              <div className="mt-4 grid grid-cols-5 gap-2">
+                {[1, 2, 3, 4, 5].map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setFeeling(value)}
+                    className={`rounded-2xl border px-3 py-3 text-lg font-bold transition-all ${
+                      value <= feeling ? 'border-amber-400/30 bg-amber-500/15 text-amber-300' : 'border-white/10 bg-white/5 text-white/45'
+                    }`}
+                  >
+                    {value}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button type="button" onClick={() => setShowSummary(true)} className="btn-primary w-full">
+              <Trophy size={16} />
+              Finalizar e revisar
+            </button>
+          </div>
+        </div>
+
+        {showSummary ? (
+          <div className="fixed inset-0 z-50 flex items-end bg-black/70 p-0 sm:items-center sm:justify-center sm:p-6">
+            <div className="w-full rounded-t-[2rem] border border-white/10 bg-dark-800 p-5 shadow-2xl sm:max-w-2xl sm:rounded-[2rem]">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.25em] text-white/30">Resumo final</p>
+                  <h3 className="mt-2 text-2xl font-black text-white">{workout.name}</h3>
+                </div>
+                <button type="button" onClick={() => setShowSummary(false)} className="btn-secondary px-4 py-2 text-sm">Voltar</button>
+              </div>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-4">
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-white/35">Tempo total</p>
+                  <p className="mt-1 font-bold text-white">{formatClock(summary.totalTime)}</p>
+                </div>
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-white/35">Exercicios</p>
+                  <p className="mt-1 font-bold text-white">{summary.completedExercises}</p>
+                </div>
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-white/35">Volume</p>
+                  <p className="mt-1 font-bold text-white">{summary.volume} kg</p>
+                </div>
+                <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                  <p className="text-white/35">Sensacao</p>
+                  <p className="mt-1 font-bold text-white">{feeling}/5</p>
+                </div>
+              </div>
+
+              <div className="mt-5 rounded-3xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
+                <p className="font-semibold text-white">Observacoes</p>
+                <p className="mt-2 whitespace-pre-line">{notes || 'Sem observacoes registradas nesta sessao.'}</p>
+              </div>
+
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                <button type="button" onClick={saveProgress} disabled={saving} className="btn-secondary flex-1">
+                  <Save size={16} />
+                  {saving ? 'Salvando...' : 'Salvar rascunho'}
+                </button>
+                <button type="button" onClick={finishWorkout} disabled={finishing} className="btn-primary flex-1">
+                  <CheckCircle2 size={16} />
+                  {finishing ? 'Concluindo...' : 'Concluir treino'}
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     </Layout>
   )
