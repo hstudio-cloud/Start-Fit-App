@@ -381,6 +381,363 @@
   overflow: hidden;
 }
 
+.exercise-video-shell {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(0, 180, 216, 0.18);
+  background:
+    linear-gradient(180deg, rgba(10, 15, 22, 0.98), rgba(7, 11, 16, 0.98));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+.exercise-video-shell.sm { min-height: 11.4rem; }
+.exercise-video-shell.md { min-height: 14.4rem; }
+.exercise-video-shell.lg { min-height: 20rem; }
+.exercise-video-shell.highlighted {
+  box-shadow: inset 0 0 0 1px rgba(0,180,216,0.24), 0 18px 42px rgba(0, 132, 184, 0.16);
+}
+
+.exercise-video-topbar,
+.exercise-video-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 0.95rem;
+}
+
+.exercise-video-topbar {
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0));
+}
+
+.exercise-video-dots {
+  display: inline-flex;
+  gap: 0.38rem;
+}
+
+.exercise-video-dots span {
+  width: 0.52rem;
+  height: 0.52rem;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.2);
+}
+
+.exercise-video-dots span:nth-child(1) { background: rgba(248,113,113,0.82); }
+.exercise-video-dots span:nth-child(2) { background: rgba(251,191,36,0.82); }
+.exercise-video-dots span:nth-child(3) { background: rgba(52,211,153,0.82); }
+
+.exercise-video-badge {
+  border: 1px solid rgba(0,180,216,0.2);
+  border-radius: 999px;
+  padding: 0.24rem 0.65rem;
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: rgba(125, 231, 255, 0.88);
+  background: rgba(0, 180, 216, 0.08);
+}
+
+.exercise-video-stage {
+  position: relative;
+  min-height: inherit;
+  padding: 0.9rem;
+  background:
+    radial-gradient(circle at top, rgba(0,180,216,0.14), transparent 38%),
+    linear-gradient(180deg, rgba(10, 25, 38, 0.94), rgba(7, 11, 16, 0.96));
+}
+
+.exercise-video-stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0) 20%, rgba(255,255,255,0) 80%, rgba(255,255,255,0.03)),
+    repeating-linear-gradient(180deg, rgba(255,255,255,0.02) 0 2px, transparent 2px 9px);
+  pointer-events: none;
+}
+
+.exercise-video-watermark {
+  position: absolute;
+  right: 1.05rem;
+  bottom: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 999px;
+  padding: 0.36rem 0.72rem;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: rgba(232,251,255,0.78);
+  background: rgba(8, 17, 26, 0.58);
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(8px);
+}
+
+.exercise-video-live-dot {
+  width: 0.44rem;
+  height: 0.44rem;
+  border-radius: 999px;
+  background: #00e39c;
+  box-shadow: 0 0 10px rgba(0,227,156,0.7);
+  animation: exercisePulseDot 1.2s ease-in-out infinite;
+}
+
+.exercise-video-caption {
+  border-top: 1px solid rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.7);
+  font-size: 0.74rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.exercise-video-caption small {
+  font-size: 0.62rem;
+  color: rgba(125,231,255,0.72);
+}
+
+.exercise-demo-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 1.1rem;
+}
+
+.demo-bg {
+  fill: rgba(8, 15, 23, 0.86);
+}
+
+.demo-stage {
+  fill: rgba(10, 22, 32, 0.82);
+  stroke: rgba(92, 213, 245, 0.12);
+}
+
+.demo-floor,
+.demo-machine,
+.demo-machine-muted,
+.demo-machine-ghost,
+.demo-barbell,
+.demo-cable,
+.demo-wheel,
+.demo-head,
+.demo-limb {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.demo-floor {
+  stroke: rgba(255,255,255,0.14);
+  stroke-width: 4;
+}
+
+.demo-machine {
+  stroke: rgba(82, 191, 222, 0.7);
+  stroke-width: 5;
+}
+
+.demo-machine-muted {
+  stroke: rgba(255,255,255,0.18);
+  stroke-width: 5;
+}
+
+.demo-machine-ghost {
+  stroke: rgba(82,191,222,0.22);
+  fill: rgba(82,191,222,0.05);
+  stroke-width: 3;
+}
+
+.demo-barbell {
+  stroke: url(#sfAccentStroke);
+  stroke-width: 6;
+}
+
+.demo-cable {
+  stroke: rgba(214, 250, 255, 0.56);
+  stroke-width: 3;
+}
+
+.demo-wheel {
+  stroke: rgba(82, 191, 222, 0.65);
+  stroke-width: 5;
+}
+
+.demo-head {
+  fill: rgba(210, 248, 255, 0.95);
+  stroke: rgba(109, 220, 245, 0.38);
+  stroke-width: 2;
+}
+
+.demo-limb {
+  stroke: url(#sfBodyStroke);
+  stroke-width: 6;
+}
+
+.demo-person { display: none; }
+.exercise-demo-svg.scene-bench .demo-bench,
+.exercise-demo-svg.scene-press .demo-press,
+.exercise-demo-svg.scene-pulldown .demo-pulldown,
+.exercise-demo-svg.scene-row .demo-row,
+.exercise-demo-svg.scene-pullup .demo-pullup,
+.exercise-demo-svg.scene-squat .demo-squat,
+.exercise-demo-svg.scene-lunge .demo-lunge,
+.exercise-demo-svg.scene-curl .demo-curl,
+.exercise-demo-svg.scene-pushdown .demo-pushdown,
+.exercise-demo-svg.scene-raise .demo-raise,
+.exercise-demo-svg.scene-calf .demo-calf,
+.exercise-demo-svg.scene-pushup .demo-pushup,
+.exercise-demo-svg.scene-floor-core .demo-floorcore,
+.exercise-demo-svg.scene-legpress .demo-legpress,
+.exercise-demo-svg.scene-machine-leg .demo-machineleg,
+.exercise-demo-svg.scene-treadmill .demo-treadmill,
+.exercise-demo-svg.scene-bike .demo-bike,
+.exercise-demo-svg.scene-elliptical .demo-elliptical {
+  display: block;
+}
+
+.demo-rig { display: none; }
+.exercise-demo-svg.scene-bench .bench-rig,
+.exercise-demo-svg.scene-pushdown .cable-rig,
+.exercise-demo-svg.scene-pulldown .cable-rig,
+.exercise-demo-svg.scene-bike .bike-rig,
+.exercise-demo-svg.scene-elliptical .bike-rig,
+.exercise-demo-svg.scene-treadmill .treadmill-rig,
+.exercise-demo-svg.scene-legpress .legpress-rig {
+  display: block;
+}
+
+.exercise-demo-svg.scene-machine-leg .demo-machine-muted {
+  stroke: rgba(255,255,255,0.26);
+}
+
+.exercise-demo-svg.scene-bench .demo-bench,
+.exercise-demo-svg.scene-pushup .demo-pushup,
+.exercise-demo-svg.scene-floor-core .demo-floorcore,
+.exercise-demo-svg.scene-bike .demo-bike {
+  animation: demoTranslateLoop 1.8s ease-in-out infinite;
+}
+
+.exercise-demo-svg.scene-pulldown .arm-left,
+.exercise-demo-svg.scene-pulldown .arm-right,
+.exercise-demo-svg.scene-pullup .arm-left,
+.exercise-demo-svg.scene-pullup .arm-right,
+.exercise-demo-svg.scene-row .arm-left,
+.exercise-demo-svg.scene-row .arm-right {
+  animation: demoPullArms 1.5s ease-in-out infinite;
+  transform-origin: 108px 78px;
+}
+
+.exercise-demo-svg.scene-bench .arm-left,
+.exercise-demo-svg.scene-bench .arm-right,
+.exercise-demo-svg.scene-press .arm-left,
+.exercise-demo-svg.scene-press .arm-right {
+  animation: demoPressArms 1.5s ease-in-out infinite;
+  transform-origin: 108px 76px;
+}
+
+.exercise-demo-svg.scene-bench .demo-barbell,
+.exercise-demo-svg.scene-press .demo-barbell {
+  animation: demoBarbellFloat 1.5s ease-in-out infinite;
+}
+
+.exercise-demo-svg.scene-squat .demo-squat,
+.exercise-demo-svg.scene-lunge .demo-lunge,
+.exercise-demo-svg.scene-legpress .demo-legpress,
+.exercise-demo-svg.scene-machine-leg .demo-machineleg,
+.exercise-demo-svg.scene-calf .demo-calf {
+  animation: demoLowerBodyLoop 1.7s ease-in-out infinite;
+}
+
+.exercise-demo-svg.scene-curl .arm-left,
+.exercise-demo-svg.scene-curl .arm-right,
+.exercise-demo-svg.scene-pushdown .arm-left,
+.exercise-demo-svg.scene-pushdown .arm-right,
+.exercise-demo-svg.scene-raise .arm-left,
+.exercise-demo-svg.scene-raise .arm-right {
+  animation: demoArmsLoop 1.4s ease-in-out infinite;
+  transform-origin: 108px 72px;
+}
+
+.exercise-demo-svg.scene-treadmill .demo-treadmill,
+.exercise-demo-svg.scene-elliptical .demo-elliptical {
+  animation: demoRunLoop 1.05s linear infinite;
+}
+
+.exercise-demo-svg.scene-bike .leg-left,
+.exercise-demo-svg.scene-bike .leg-right,
+.exercise-demo-svg.scene-bike .arm-left {
+  animation: demoBikeLoop 1.05s linear infinite;
+  transform-origin: 116px 88px;
+}
+
+.exercise-demo-svg.family-crunch .demo-floorcore {
+  animation: demoCrunchLoop 1.3s ease-in-out infinite;
+  transform-origin: 92px 100px;
+}
+
+.exercise-demo-svg.family-leg-raise .leg-left,
+.exercise-demo-svg.family-leg-raise .leg-right {
+  animation: demoLegRaiseLoop 1.3s ease-in-out infinite;
+  transform-origin: 138px 100px;
+}
+
+@keyframes exercisePulseDot {
+  0%, 100% { opacity: 0.45; transform: scale(0.88); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes demoTranslateLoop {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(5px); }
+}
+
+@keyframes demoPullArms {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(6px) rotate(4deg); }
+}
+
+@keyframes demoPressArms {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes demoBarbellFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes demoLowerBodyLoop {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(7px); }
+}
+
+@keyframes demoArmsLoop {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(8deg); }
+}
+
+@keyframes demoRunLoop {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(2px); }
+}
+
+@keyframes demoBikeLoop {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(7deg); }
+}
+
+@keyframes demoCrunchLoop {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-14deg) translateY(-2px); }
+}
+
+@keyframes demoLegRaiseLoop {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-18deg); }
+}
+
 .exercise-animation-shell {
   position: relative;
   overflow: hidden;

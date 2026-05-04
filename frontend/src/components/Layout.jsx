@@ -161,7 +161,7 @@ export default function Layout({ children, title }) {
           })}
         </nav>
 
-        <div className="border-t border-white/5 p-4">
+        <div className="border-t border-white/5 p-4 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-4">
           <button
             onClick={handleLogout}
             className="sidebar-link w-full text-red-400 hover:bg-red-500/10 hover:text-red-300"

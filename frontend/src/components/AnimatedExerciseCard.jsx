@@ -23,7 +23,7 @@ export default function AnimatedExerciseCard({ exercise, onOpen, compact = false
               <p className="text-xs uppercase tracking-[0.22em] text-white/30">{item.muscleGroup}</p>
               <h3 className="mt-2 text-lg font-bold text-white">{item.exerciseName || item.name}</h3>
             </div>
-            <span className="badge-info whitespace-nowrap">{item.animation.source === 'muscleGroup' ? 'fallback' : 'animado'}</span>
+            <span className="badge-info whitespace-nowrap">{item.animation.source === 'muscleGroup' ? 'fallback' : 'demo loop'}</span>
           </div>
 
           <div className="mt-3 flex flex-wrap gap-2 text-xs text-white/55">
